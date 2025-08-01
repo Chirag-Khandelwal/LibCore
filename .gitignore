@@ -1,41 +1,81 @@
-# Prerequisites
-*.d
+# Editor/Compiler files #
+################
+.vs/
+.vscode/
+.clangd/
+.cache/
+compile_commands.json
+*.swp
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# Windows trash #
+##########################
+$null
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
+# TeX intermediate files #
+##########################
 *.out
-*.app
+*.aux
 
-# debug information files
-*.dwo
+# Build files #
+###############
+testbin/
+build/
+dockerbuild/
+buildfiles/
+CMakeFiles/
+doxygen/
+flag_cache
+book/book/
+include/Config.inl
+.cache/
+
+# Extra data #
+#######################
+tmp*
+tests/*.json
+*.zip
+vgcore.*
+
+# Build file on BSD #
+#####################
+*.core
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.out
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+*.swp
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
