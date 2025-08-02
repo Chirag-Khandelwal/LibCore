@@ -57,6 +57,9 @@ public:
 	void *alloc(size_t size, size_t align);
 	void free(void *data);
 
+	// Helper function - only use if seeing memory issues.
+	void dumpMem(char *pool);
+
 	template<typename T, typename... Args> T *alloc(Args &&...args)
 	{
 		void *m = alloc(sizeof(T), alignof(T));
@@ -64,9 +67,7 @@ public:
 	}
 
 	inline size_t getPoolSize() { return poolSize; }
-
-	// Helper function - only use if seeing memory issues.
-	void dumpMem(char *pool);
+	inline size_t getPoolCount() { return pools.size(); }
 };
 
 // Base class for anything that uses the allocator

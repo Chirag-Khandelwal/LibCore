@@ -5,19 +5,39 @@ namespace core::args
 
 ArgInfo::ArgInfo() : reqd(false), valReqd(false), found(false) {}
 
-ArgParser::ArgParser(int argc, const char **argv) : passThroughFrom(-1)
+ArgParser::ArgParser(Span<StringRef> args) : passThroughFrom(-1)
 {
+	init();
+	for(auto &a : args) {
+		argv.emplace_back(a);
+	}
+}
+ArgParser::ArgParser(int argc, const char **argv)
+{
+	init();
 	for(int i = 0; i < argc; ++i) this->argv.emplace_back(argv[i]);
-
-	add("help").addOpt("--help").addOpt("-h").setHelp("prints help information for program");
 }
 
-ArgInfo &ArgParser::add(StringRef argname)
+void ArgParser::init()
+{
+	passThroughFrom = -1;
+	addArg("help").addOpts("--help", "-h").setHelp("prints help information for program");
+}
+
+ArgInfo &ArgParser::addArg(StringRef argname)
 {
 	argDefs.emplace_back();
 	ArgInfo &inf = argDefs.back();
 	inf.setName(argname);
 	return inf;
+}
+
+ArgInfo *ArgParser::getArg(StringRef argname)
+{
+	for(size_t i = 0; i < argDefs.size(); ++i) {
+		if(argDefs[i].getName() == argname) return &argDefs[i];
+	}
+	return nullptr;
 }
 
 Status<bool> ArgParser::parse()
@@ -73,7 +93,7 @@ Status<bool> ArgParser::parse()
 			return Status(false, "found a repeated argument: ", arg);
 		}
 		if(matched == -1) {
-			return Status(false, "invalid argument, use --help");
+			return Status(false, "invalid argument: ", arg, ", use --help");
 		}
 		stopParsing = argDefs[matched].getName() == lastParsedArg;
 		if(stopParsing && expectingValIdx == -1) {

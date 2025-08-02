@@ -43,9 +43,9 @@ public:
 		val = _val;
 		return *this;
 	}
-	inline ArgInfo &addOpt(StringRef opt)
+	template<typename... Args> ArgInfo &addOpts(Args... addOpts)
 	{
-		opts.emplace_back(opt);
+		int tmp[] = {(opts.emplace_back(addOpts), 0)...};
 		return *this;
 	}
 	inline ArgInfo &setReqd(bool req)
@@ -93,10 +93,15 @@ class ArgParser
 	// All parameters after that will not be parsed.
 	size_t passThroughFrom;
 
+	// Common between constructors.
+	void init();
+
 public:
+	ArgParser(Span<StringRef> args);
 	ArgParser(int argc, const char **argv);
 
-	ArgInfo &add(StringRef argname);
+	ArgInfo &addArg(StringRef argname);
+	ArgInfo *getArg(StringRef argname);
 
 	Status<bool> parse();
 	void printHelp(OStream &os);
@@ -107,6 +112,7 @@ public:
 	Span<StringRef> getPassthrough();
 
 	inline void setLastArg(StringRef argname) { lastParsedArg = argname; }
+	inline Span<ArgInfo> getArgDefs() { return argDefs; }
 };
 
 } // namespace core::args

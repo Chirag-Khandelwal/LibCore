@@ -27,6 +27,12 @@
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
 
+#if defined(BUILD_DEBUG)
+#define CORE_BUILD_DEBUG
+#else
+#define CORE_BUILD_RELEASE
+#endif
+
 #if defined(_WIN32) && defined(_MSC_VER)
 #define CORE_OS_WINDOWS
 #if defined(_WIN64)
