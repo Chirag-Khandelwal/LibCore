@@ -82,7 +82,7 @@ Status<bool> ArgParser::parse()
 				a.setFound(!a.requiresValue());
 				break;
 			}
-			if(!a.isPositional()) continue;
+			if(!a.isPositional() || a.isFound()) continue;
 			// positional arg
 			if(!a.isFound()) {
 				a.setVal(arg);
@@ -135,8 +135,7 @@ void ArgParser::printHelp(OStream &os)
 		if(a.isRequired()) os << " (required)";
 		else os << " (optional)";
 		if(a.requiresValue()) os << " (requires value)";
-		os << "\t\t" << a.getHelp();
-		os << "\n";
+		os << "\t\t" << a.getHelp() << "\n";
 	}
 }
 
