@@ -1,5 +1,7 @@
 #include "Utils.hpp"
 
+#include "File.hpp"
+
 #if defined(CORE_OS_WINDOWS)
 #include <AtlBase.h>
 #include <atlconv.h>
@@ -7,6 +9,75 @@
 
 namespace core::utils
 {
+
+void outputChar(OStream &os, char ch, size_t count)
+{
+	for(size_t i = 0; i < count / 4; ++i) {
+		os << ch << ch << ch << ch;
+	}
+	for(size_t i = 0; i < count % 4; ++i) {
+		os << ch;
+	}
+}
+size_t getNewLineBefore(StringRef data, size_t loc)
+{
+	while(loc != -1 && loc >= 0) {
+		if(data[loc--] == '\n') return loc + 1;
+	}
+	return -1;
+}
+size_t getNewLineAfter(StringRef data, size_t loc)
+{
+	while(loc != -1 && loc < data.size()) {
+		if(data[loc++] == '\n') return loc - 1;
+	}
+	return data.size();
+}
+size_t countNewLinesTill(StringRef data, size_t loc)
+{
+	if(loc == -1) return 0;
+	int64_t end = loc;
+	size_t ctr  = 0;
+	for(int64_t i = 0; i < data.size() && i <= end; ++i) {
+		if(data[i] == '\n') ++ctr;
+	}
+	return ctr;
+}
+
+size_t countDigits(size_t num)
+{
+	// clang-format off
+	return  (num < 10 ? 1 :
+		(num < 100 ? 2 :
+		(num < 1000 ? 3 :
+		(num < 10000 ? 4 :
+		(num < 100000 ? 5 :
+		(num < 1000000 ? 6 :
+		(num < 10000000 ? 7 :
+		(num < 100000000 ? 8 :
+		(num < 1000000000 ? 9 :
+		(num < 4294967295 ? 10 : 0))))))))));
+	// clang-format on
+}
+
+size_t stringCharCount(StringRef str, char ch)
+{
+	size_t count = 0;
+	for(auto c : str) {
+		if(c == ch) ++count;
+	}
+	return count;
+}
+
+void stringReplace(String &str, StringRef from, StringRef to)
+{
+	auto &&pos = str.find(from);
+	while(pos != String::npos) {
+		str.replace(pos, from.length(), to);
+		// easy to forget to add to.length()
+		pos = str.find(from, pos + to.length());
+	}
+}
 
 Vector<StringRef> stringDelim(StringRef str, StringRef delim)
 {
@@ -226,6 +297,43 @@ String viewBackSlash(StringRef data)
 		}
 	}
 	return res;
+}
+
+void outputString(fs::File *src, OStream &os, size_t locStart, size_t locEnd, bool iswarn,
+		  const String &e)
+{
+	// Invalid loc, just show the message.
+	if(src && locStart != -1) {
+		size_t prevNewLine = getNewLineBefore(src->getData(), locStart);
+		size_t nextNewLine = locEnd != -1 && locStart < locEnd
+				     ? getNewLineAfter(src->getData(), locEnd)
+				     : getNewLineAfter(src->getData(), locStart);
+
+		String line(src->getData().begin() + (prevNewLine + 1),
+			    src->getData().begin() + nextNewLine);
+		size_t tabCount = stringCharCount(line, '\t');
+		stringReplace(line, "\t", "    ");
+
+		// + 1 for index -> line number
+		size_t lineNumber  = countNewLinesTill(src->getData(), prevNewLine) + 1;
+		size_t columnStart = locStart - (prevNewLine + 1) + (tabCount * 3);
+		size_t columnEnd   = locEnd != -1 && locStart < locEnd
+				     ? locEnd - (prevNewLine + 1) + (tabCount * 3)
+				     : columnStart;
+
+		size_t prefixSpaceCount = countDigits(lineNumber) + 3; // lineNum + " | "
+		os << "In file: " << src->getPath() << "\n";
+		os << lineNumber << " | " << line << "\n";
+		outputChar(os, ' ', prefixSpaceCount + columnStart);
+		outputChar(os, '~', columnEnd - columnStart + 1);
+		os << "\n";
+		outputChar(os, ' ', prefixSpaceCount + columnStart);
+		os << "^\n";
+		outputChar(os, ' ', prefixSpaceCount);
+	}
+	if(iswarn) os << "Warning: ";
+	else os << "Error: ";
+	os << e << "\n";
 }
 
 } // namespace core::utils

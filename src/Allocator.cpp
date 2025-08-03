@@ -107,7 +107,7 @@ void *MemoryManager::alloc(size_t size, size_t align)
 	size_t allocSz	  = nextPow2(requiredSz);
 
 	logger.trace("Allocating: ", allocSz, " (required size: ", requiredSz,
-		     ") (original size: ", size, ")\n");
+		     ") (original size: ", size, ")");
 
 	char *loc = nullptr;
 
@@ -115,6 +115,8 @@ void *MemoryManager::alloc(size_t size, size_t align)
 	if(allocSz > poolSize) {
 		totalAllocBytes += allocSz;
 		loc = (char *)AlignedAlloc(MAX_ALIGNMENT, allocSz);
+		logger.trace("Allocated ", allocSz,
+			     " using malloc as it exceeds pool size: ", poolSize);
 	} else {
 		totalPoolAlloc += allocSz;
 		LockGuard<RecursiveMutex> mtxlock(mtx);
@@ -127,6 +129,7 @@ void *MemoryManager::alloc(size_t size, size_t align)
 			it->second = getAllocDetailNext(addr);
 			setAllocDetailNext(addr, 0);
 			++chunkReuseCount;
+			logger.trace("Allocated ", allocSz, " using chunk list");
 			// No need to size size bytes here because they would have already been set
 			// when they were taken from the pool.
 			return loc;
@@ -138,6 +141,7 @@ void *MemoryManager::alloc(size_t size, size_t align)
 			if(freespace >= allocSz) {
 				loc = p.head;
 				p.head += allocSz;
+				logger.trace("Allocated ", allocSz, " using existing pool");
 				break;
 			}
 		}
@@ -146,6 +150,7 @@ void *MemoryManager::alloc(size_t size, size_t align)
 			auto &p = pools.back();
 			loc	= p.head;
 			p.head += allocSz;
+			logger.trace("Allocated ", allocSz, " using a newly generated pool");
 		}
 	}
 	loc += ALLOC_DETAIL_BYTES;

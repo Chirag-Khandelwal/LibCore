@@ -6,6 +6,7 @@
 #include "Args.hpp"
 #include "Env.hpp"
 #include "FS.hpp"
+#include "File.hpp"
 #include "Logger.hpp"
 #include "Result.hpp"
 #include "Utils.hpp"

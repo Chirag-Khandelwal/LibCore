@@ -2,10 +2,36 @@
 
 #include "Core.hpp"
 
+namespace core::fs
+{
+class File;
+}
+
 namespace core::utils
 {
 
 inline bool startsWith(StringRef src, StringRef term) { return src.rfind(term, 0) == 0; }
+
+// Output a char `ch`, `count` times.
+void outputChar(OStream &os, char ch, size_t count);
+// Does not include loc. So if loc is a newline, the function won't return loc itself.
+size_t getNewLineBefore(StringRef data, size_t loc);
+// Does not include loc. So if loc is a newline, the function won't return loc itself.
+size_t getNewLineAfter(StringRef data, size_t loc);
+// The range is [0, loc] (inclusive)
+size_t countNewLinesTill(StringRef data, size_t loc);
+
+// Count number of digits (positive number only)
+size_t countDigits(size_t num);
+
+void outputString(fs::File *src, OStream &os, size_t locStart, size_t locEnd, bool iswarn,
+		  const String &e);
+
+// Counts all instances of `c` in `str`.
+size_t stringCharCount(StringRef str, char ch);
+
+// Replaces all instances of `from` with `to` in `str`.
+void stringReplace(String &str, StringRef from, StringRef to);
 
 // Also trims the spaces for each split
 Vector<StringRef> stringDelim(StringRef str, StringRef delim);
@@ -47,6 +73,25 @@ template<typename... Args> String toString(Args... args)
 	String dest;
 	appendToString(dest, std::forward<Args>(args)...);
 	return dest;
+}
+
+template<typename... Args>
+void output(fs::File *src, OStream &os, size_t locStart, size_t locEnd, bool iswarn, Args &&...args)
+{
+	String res = utils::toString(std::forward<Args>(args)...);
+	outputString(src, os, locStart, locEnd, iswarn, res);
+}
+
+template<typename... Args>
+void fail(fs::File *src, OStream &os, size_t locStart, size_t locEnd, Args &&...args)
+{
+	utils::output(src, os, locStart, locEnd, false, std::forward<Args>(args)...);
+}
+
+template<typename... Args>
+void warn(fs::File *src, OStream &os, size_t locStart, size_t locEnd, Args &&...args)
+{
+	utils::output(src, os, locStart, locEnd, true, std::forward<Args>(args)...);
 }
 
 #if defined(CORE_OS_WINDOWS)

@@ -10,16 +10,19 @@ template<typename T, typename E> class Result
 	Variant<T, Status<E>> data;
 
 public:
+	// okay value
 	Result(T &&obj) : data(std::move(obj)) {}
-	template<typename... Args> Result(E &&err, Args... args)
-		: data(Status(err, std::forward<Args>(args)...))
+	// err value
+	template<typename... Args> explicit Result(E &&ec, Args &&...msgArgs)
+		: data(Status<E>(ec, std::forward<Args>(msgArgs)...))
 	{}
+	Result(Status<E> &&obj) : data(std::move(obj)) {}
 
-	inline T &&value() { return std::get<T>(std::move(data)); }
-	inline T &valueRef() { return std::get<T>(data); }
+	inline T &&val() { return std::get<T>(std::move(data)); }
+	inline T &valRef() { return std::get<T>(data); }
 
 	inline Status<E> &&err() { return std::get<Status<E>>(std::move(data)); }
-	inline T &errRef() { return std::get<Status<E>>(data); }
+	inline Status<E> &errRef() { return std::get<Status<E>>(data); }
 
 	inline bool isErr() const { return std::holds_alternative<Status<E>>(data); }
 	inline bool isOk() const { return !isErr(); }
