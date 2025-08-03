@@ -7,9 +7,10 @@ namespace core
 
 template<typename T, typename E> class Result
 {
-	Variant<T, Status<E>> data;
+	Variant<T, E> data;
 
 public:
+	Result(E &&err) : data(std::move(err)) {}
 	Result(T &&obj) : data(std::move(obj)) {}
 	template<typename... Args> Result(E &&err, Args... args)
 		: data(Status(err, std::forward<Args>(args)...))
@@ -18,10 +19,10 @@ public:
 	inline T &&value() { return std::get<T>(std::move(data)); }
 	inline T &valueRef() { return std::get<T>(data); }
 
-	inline Status<E> &&err() { return std::get<Status<E>>(std::move(data)); }
-	inline T &errRef() { return std::get<Status<E>>(data); }
+	inline E &&err() { return std::get<Status<E>>(std::move(data)); }
+	inline E &errRef() { return std::get<E>(data); }
 
-	inline bool isErr() const { return std::holds_alternative<Status<E>>(data); }
+	inline bool isErr() const { return std::holds_alternative<E>(data); }
 	inline bool isOk() const { return !isErr(); }
 };
 
