@@ -7,15 +7,11 @@ namespace core::fs
 
 File::File(const char *path, bool isVirt) : path(path), isVirt(isVirt) {}
 
-Result<File, bool> File::create(const char *path, bool isVirt)
+Status<bool> File::read()
 {
-	File file(path, isVirt);
-	if(!isVirt) {
-		Status<bool> res = fs::read(path, file.data);
-		if(!res.getCode()) return res;
-	}
-	if(!file.data.empty()) file.appendLocs.push_back(0);
-	return file;
+	if(isVirt) return Status(false, "Cannot read a virtual file: ", path);
+	Status<bool> res = fs::read(path.c_str(), data);
+	return res;
 }
 
 bool File::set(String &&data)

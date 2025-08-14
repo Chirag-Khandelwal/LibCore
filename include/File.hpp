@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Result.hpp"
+#include "Allocator.hpp"
+#include "Status.hpp"
 
 namespace core::fs
 {
 
 // To create and manage files (including virtual like `<eval>`)
 // as well as provide error messages using file locations.
-class File
+class File : public IAllocated
 {
 	String path;
 	// All file contents are stored in this.
@@ -17,10 +18,10 @@ class File
 	Vector<size_t> appendLocs;
 	bool isVirt; // isVirtual
 
+public:
 	File(const char *path, bool isVirt);
 
-public:
-	static Result<File, bool> create(const char *path, bool isVirt);
+	Status<bool> read();
 
 	bool set(String &&data);
 	// Only for virtual files.

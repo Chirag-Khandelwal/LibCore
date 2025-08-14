@@ -78,23 +78,49 @@ public:
 	virtual ~IAllocated();
 };
 
-// Cannot be a static object - as it uses the static variable `logger` in destructor.
-// RAII based - does not allow freeing of the memory unless it goes out of scope.
-class Allocator
+// Can be a static object - any allocation is expected to be free'd manually.
+class SimpleAllocator
 {
 	MemoryManager &mem;
-	UniList<IAllocated *> allocs;
 	String name;
 
 public:
-	Allocator(MemoryManager &mem, StringRef name);
-	~Allocator();
+	SimpleAllocator(MemoryManager &mem, StringRef name);
+
+	inline StringRef getName() { return name; }
 
 	template<typename T, typename... Args>
 	typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type
-	alloc(Args... args)
+	alloc(Args &&...args)
 	{
 		T *res = mem.alloc<T>(std::forward<Args>(args)...);
+		return res;
+	}
+	void free(IAllocated *data)
+	{
+		data->~IAllocated();
+		mem.free(data);
+	}
+};
+
+// Cannot be a static object - as it uses the static variable `logger` in destructor.
+// RAII based - does not allow freeing of the memory unless it goes out of scope.
+class ManagedAllocator
+{
+	SimpleAllocator allocator;
+	UniList<IAllocated *> allocs;
+
+public:
+	ManagedAllocator(MemoryManager &mem, StringRef name);
+	~ManagedAllocator();
+
+	inline StringRef getName() { return allocator.getName(); }
+
+	template<typename T, typename... Args>
+	typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type
+	alloc(Args &&...args)
+	{
+		T *res = allocator.alloc<T>(std::forward<Args>(args)...);
 		allocs.push_front(res);
 		return res;
 	}

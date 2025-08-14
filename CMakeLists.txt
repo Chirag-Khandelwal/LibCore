@@ -29,8 +29,8 @@ target_compile_features(LibCore PUBLIC cxx_std_20)
 target_include_directories(LibCore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 # For MSVC. It requires externed variables to be specified as __declspec(dllexport/dllimport) depending on
 # if the the DLL is being generated, or is being used.
-target_compile_definitions(LibCore PUBLIC EXPORT_FOR_DLL=true)
-target_compile_definitions(LibCore PUBLIC $<$<CONFIG:Debug,RelWithDebInfo>:BUILD_DEBUG=true>)
+target_compile_definitions(LibCore PRIVATE EXPORT_FOR_DLL=true)
+target_compile_definitions(LibCore PRIVATE $<$<CONFIG:Debug,RelWithDebInfo>:BUILD_DEBUG=true>)
 set_target_properties(LibCore
 	PROPERTIES
 	CXX_STANDARD_REQUIRED ON

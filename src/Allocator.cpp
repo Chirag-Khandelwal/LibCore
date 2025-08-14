@@ -191,16 +191,17 @@ void MemoryManager::dumpMem(char *pool)
 IAllocated::IAllocated() {}
 IAllocated::~IAllocated() {}
 
-Allocator::Allocator(MemoryManager &mem, StringRef name) : mem(mem), name(name) {}
-Allocator::~Allocator()
+SimpleAllocator::SimpleAllocator(MemoryManager &mem, StringRef name) : mem(mem), name(name) {}
+
+ManagedAllocator::ManagedAllocator(MemoryManager &mem, StringRef name) : allocator(mem, name) {}
+ManagedAllocator::~ManagedAllocator()
 {
 	size_t count = 0;
 	for(auto &m : allocs) {
 		++count;
-		m->~IAllocated();
-		mem.free(m);
+		allocator.free(m);
 	}
-	logger.trace(name, " allocator had ", count, " allocations");
+	logger.trace(getName(), " allocator had ", count, " allocations");
 }
 
 } // namespace core

@@ -6,9 +6,7 @@ using namespace core;
 
 TEST_CASE("Basic", "File")
 {
-	auto fileRes = fs::File::create("<test>", true);
-	REQUIRE(fileRes.isOk());
-	fs::File f = fileRes.val();
+	fs::File f("<test>", true);
 	REQUIRE(f.emptyData());
 	REQUIRE(f.isVirtual());
 
