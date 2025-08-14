@@ -5,15 +5,21 @@
 namespace core
 {
 
-struct AllocDetail
+enum class AllocDetails : uint32_t
 {
-	// Allocation size
-	size_t memSz;
+	// Size in bytes of the allocation
+	SIZE,
 	// Address of next free allocation of the same size
+	// Can be used for something else while the memory is allocated -
+	// make sure to reset the value to zero before freeing though
 	// The address points to the usable location, so to get AllocDetail from there,
 	// you must do: (char*)loc - sizeof(AllocDetail)
-	size_t next;
+	NEXT,
+
+	_LAST,
 };
+
+using AllocDetail = size_t[static_cast<uint32_t>(AllocDetails::_LAST)];
 
 constexpr size_t MAX_ROUNDUP	    = 2048;
 constexpr size_t DEFAULT_POOL_SIZE  = 8 * 1024;
@@ -66,6 +72,19 @@ public:
 		return new(m) T(std::forward<Args>(args)...);
 	}
 
+	// alloc address must be AFTER sizeof(AllocDetail)
+	inline void setAllocDetail(size_t alloc, AllocDetails field, size_t value)
+	{
+		(*(AllocDetail *)((char *)alloc -
+				  ALLOC_DETAIL_BYTES))[static_cast<uint32_t>(field)] = value;
+	}
+	// alloc address must be AFTER sizeof(AllocDetail)
+	inline size_t getAllocDetail(size_t alloc, AllocDetails field)
+	{
+		return (
+		*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES))[static_cast<uint32_t>(field)];
+	}
+
 	inline size_t getPoolSize() { return poolSize; }
 	inline size_t getPoolCount() { return pools.size(); }
 };
@@ -89,6 +108,17 @@ public:
 
 	inline StringRef getName() { return name; }
 
+	// alloc address must be AFTER sizeof(AllocDetail)
+	inline void setAllocDetail(size_t alloc, AllocDetails field, size_t value)
+	{
+		return mem.setAllocDetail(alloc, field, value);
+	}
+	// alloc address must be AFTER sizeof(AllocDetail)
+	inline size_t getAllocDetail(size_t alloc, AllocDetails field)
+	{
+		return mem.getAllocDetail(alloc, field);
+	}
+
 	template<typename T, typename... Args>
 	typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type
 	alloc(Args &&...args)
@@ -108,7 +138,7 @@ public:
 class ManagedAllocator
 {
 	SimpleAllocator allocator;
-	UniList<IAllocated *> allocs;
+	IAllocated *start;
 
 public:
 	ManagedAllocator(MemoryManager &mem, StringRef name);
@@ -121,7 +151,8 @@ public:
 	alloc(Args &&...args)
 	{
 		T *res = allocator.alloc<T>(std::forward<Args>(args)...);
-		allocs.push_front(res);
+		allocator.setAllocDetail((size_t)res, AllocDetails::NEXT, (size_t)start);
+		start = res;
 		return res;
 	}
 };

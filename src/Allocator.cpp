@@ -18,38 +18,6 @@ namespace core
 static Atomic<size_t> totalAllocRequests = 0, totalAllocBytes = 0, totalPoolAlloc = 0,
 		      chunkReuseCount = 0;
 
-// alloc address must be AFTER sizeof(AllocDetail)
-inline void setAllocDetail(size_t alloc, size_t memSz, size_t next)
-{
-	*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES) = {memSz, next};
-}
-// alloc address must be AFTER sizeof(AllocDetail)
-inline void setAllocDetailNext(size_t alloc, size_t next)
-{
-	(*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES)).next = next;
-}
-// alloc address must be AFTER sizeof(AllocDetail)
-inline void setAllocDetailMemSz(size_t alloc, size_t memSz)
-{
-	(*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES)).memSz = memSz;
-}
-
-// alloc address must be AFTER sizeof(AllocDetail)
-inline AllocDetail getAllocDetail(size_t alloc)
-{
-	return *(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES);
-}
-// alloc address must be AFTER sizeof(AllocDetail)
-inline size_t getAllocDetailNext(size_t alloc)
-{
-	return (*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES)).next;
-}
-// alloc address must be AFTER sizeof(AllocDetail)
-inline size_t getAllocDetailMemSz(size_t alloc)
-{
-	return (*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES)).memSz;
-}
-
 MemoryManager::MemoryManager(StringRef name, size_t poolSize) : name(name), poolSize(poolSize)
 {
 	allocPool();
@@ -60,12 +28,10 @@ MemoryManager::~MemoryManager()
 	for(auto &it : freechunks) {
 		if(it.first > poolSize || it.second == 0) continue;
 		size_t allocAddr = it.second;
-		AllocDetail detail;
 		while(allocAddr > 0) {
-			detail = getAllocDetail(allocAddr);
-			if(detail.memSz <= poolSize) break;
+			if(getAllocDetail(allocAddr, AllocDetails::SIZE) <= poolSize) break;
 			AlignedFree((char *)allocAddr - ALLOC_DETAIL_BYTES);
-			allocAddr = detail.next;
+			allocAddr = getAllocDetail(allocAddr, AllocDetails::NEXT);
 		}
 	}
 	freechunks.clear();
@@ -126,8 +92,8 @@ void *MemoryManager::alloc(size_t size, size_t align)
 		if(it != freechunks.end()) addr = it->second;
 		if(addr != 0) {
 			loc	   = (char *)addr;
-			it->second = getAllocDetailNext(addr);
-			setAllocDetailNext(addr, 0);
+			it->second = getAllocDetail(addr, AllocDetails::NEXT);
+			setAllocDetail(addr, AllocDetails::NEXT, 0);
 			++chunkReuseCount;
 			logger.trace("Allocated ", allocSz, " using chunk list");
 			// No need to size size bytes here because they would have already been set
@@ -154,7 +120,8 @@ void *MemoryManager::alloc(size_t size, size_t align)
 		}
 	}
 	loc += ALLOC_DETAIL_BYTES;
-	setAllocDetail((size_t)loc, allocSz, 0);
+	setAllocDetail((size_t)loc, AllocDetails::SIZE, allocSz);
+	setAllocDetail((size_t)loc, AllocDetails::NEXT, 0);
 	return loc;
 }
 
@@ -162,7 +129,7 @@ void MemoryManager::free(void *data)
 {
 	if(data == nullptr) return;
 	char *loc = (char *)data;
-	size_t sz = getAllocDetailMemSz((size_t)loc);
+	size_t sz = getAllocDetail((size_t)loc, AllocDetails::SIZE);
 	if(sz > poolSize) {
 		AlignedFree(loc - ALLOC_DETAIL_BYTES);
 		return;
@@ -173,7 +140,7 @@ void MemoryManager::free(void *data)
 		freechunks.insert({sz, (size_t)loc});
 		return;
 	}
-	setAllocDetailNext((size_t)loc, mapLoc->second);
+	setAllocDetail((size_t)loc, AllocDetails::NEXT, mapLoc->second);
 	mapLoc->second = (size_t)loc;
 }
 
@@ -193,13 +160,19 @@ IAllocated::~IAllocated() {}
 
 SimpleAllocator::SimpleAllocator(MemoryManager &mem, StringRef name) : mem(mem), name(name) {}
 
-ManagedAllocator::ManagedAllocator(MemoryManager &mem, StringRef name) : allocator(mem, name) {}
+ManagedAllocator::ManagedAllocator(MemoryManager &mem, StringRef name)
+	: allocator(mem, name), start(0)
+{}
 ManagedAllocator::~ManagedAllocator()
 {
 	size_t count = 0;
-	for(auto &m : allocs) {
+	while((size_t)start > 0) {
 		++count;
-		allocator.free(m);
+		IAllocated *next =
+		(IAllocated *)allocator.getAllocDetail((size_t)start, AllocDetails::NEXT);
+		allocator.setAllocDetail((size_t)start, AllocDetails::NEXT, 0);
+		allocator.free(start);
+		start = next;
 	}
 	logger.trace(getName(), " allocator had ", count, " allocations");
 }
