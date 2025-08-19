@@ -30,7 +30,7 @@ target_include_directories(LibCore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 # For MSVC. It requires externed variables to be specified as __declspec(dllexport/dllimport) depending on
 # if the the DLL is being generated, or is being used.
 target_compile_definitions(LibCore PRIVATE EXPORT_FOR_DLL=true)
-target_compile_definitions(LibCore PRIVATE $<$<CONFIG:Debug,RelWithDebInfo>:BUILD_DEBUG=true>)
+target_compile_definitions(LibCore PUBLIC $<$<CONFIG:Debug,RelWithDebInfo>:BUILD_DEBUG=true>)
 set_target_properties(LibCore
 	PROPERTIES
 	CXX_STANDARD_REQUIRED ON
@@ -38,7 +38,6 @@ set_target_properties(LibCore
 	POSITION_INDEPENDENT_CODE TRUE
 	PREFIX "" # 'lib' as prefix is not needed on linux since the name is LibCore anyway
 	LINK_FLAGS "${EXTRA_LD_FLAGS}"
-	MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>"
 	INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 # Install C++ Includes
@@ -66,7 +65,7 @@ if(BUILD_TESTING AND NOT_SUBPROJECT)
 		string(SUBSTRING ${testfile} 4 -1 m)
 		get_filename_component(testname ${m} NAME_WE)
 		add_executable(${testname} "${testfile}")
-		target_compile_features(${testname} PUBLIC cxx_std_20)
+		target_compile_features(${testname} PRIVATE cxx_std_20)
 		target_link_libraries(${testname} LibCore::LibCore Catch2::Catch2WithMain)
 		set_target_properties(${testname}
 			PROPERTIES
