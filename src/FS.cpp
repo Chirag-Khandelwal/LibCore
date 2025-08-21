@@ -14,8 +14,6 @@
 namespace core::fs
 {
 
-int total_lines = 0;
-
 StringRef parentDir(StringRef path)
 {
 	auto loc = path.find_last_of("/\\");
@@ -41,35 +39,6 @@ Status<bool> read(const char *file, String &data)
 	return Status(true);
 }
 
-String absPath(const char *loc)
-{
-	static char abs[MAX_PATH_CHARS];
-#if defined(CORE_OS_WINDOWS)
-	_fullpath(abs, loc, MAX_PATH_CHARS);
-#else
-	realpath(loc, abs);
-#endif
-	return abs;
-}
-
-bool setCWD(const char *path)
-{
-#if defined(CORE_OS_WINDOWS)
-	return _chdir(path) != 0;
-#else
-	return chdir(path) != 0;
-#endif
-}
-
-String getCWD()
-{
-	static char cwd[MAX_PATH_CHARS];
-	if(getcwd(cwd, sizeof(cwd)) != NULL) {
-		return cwd;
-	}
-	return "";
-}
-
 StringRef home()
 {
 	// StringRef works because String _home is static.
@@ -80,8 +49,6 @@ StringRef home()
 #endif
 	return _home;
 }
-
-bool exists(StringRef loc) { return std::filesystem::exists(loc); }
 
 int copy(StringRef src, StringRef dest, std::error_code &ec)
 {
@@ -118,6 +85,12 @@ int remove(StringRef path, std::error_code &ec)
 	std::filesystem::remove_all(path, ec);
 	return ec.value();
 }
+
+bool exists(StringRef loc) { return std::filesystem::exists(loc); }
+String baseName(StringRef path) { return std::filesystem::path(path).filename().string(); }
+String absPath(StringRef path) { return std::filesystem::absolute(path).string(); }
+void setCWD(StringRef path) { return std::filesystem::current_path(path); }
+String getCWD() { return std::filesystem::current_path().string(); }
 
 } // namespace core::fs
 

@@ -97,4 +97,13 @@ String getExeFromPath(const char *exe)
 	return "";
 }
 
+int exec(const char *cmd)
+{
+	int res = std::system(cmd);
+#if !defined(CORE_OS_WINDOWS)
+	res = WEXITSTATUS(res);
+#endif
+	return res;
+}
+
 } // namespace core::env

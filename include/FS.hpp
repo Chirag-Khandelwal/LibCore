@@ -12,11 +12,7 @@ namespace core::fs
 
 StringRef parentDir(StringRef path);
 
-bool exists(StringRef loc);
 Status<bool> read(const char *file, String &data);
-String absPath(const char *loc);
-bool setCWD(const char *path);
-String getCWD();
 StringRef home();
 
 int copy(StringRef src, StringRef dest, std::error_code &ec);
@@ -24,5 +20,11 @@ int mkdir(StringRef dir, std::error_code &ec);
 int mklink(StringRef src, StringRef dest, std::error_code &ec);
 int rename(StringRef from, StringRef to, std::error_code &ec);
 int remove(StringRef path, std::error_code &ec);
+
+bool exists(StringRef loc);
+String baseName(StringRef path);
+String absPath(StringRef path);
+void setCWD(StringRef path);
+String getCWD();
 
 } // namespace core::fs
