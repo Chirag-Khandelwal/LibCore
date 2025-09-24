@@ -174,7 +174,7 @@ ManagedAllocator::~ManagedAllocator()
 		allocator.free(start);
 		start = next;
 	}
-	logger.trace(getName(), " allocator had ", count, " allocations");
+	logger.info(getName(), " allocator had ", count, " allocations");
 }
 
 } // namespace core

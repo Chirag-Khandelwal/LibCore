@@ -35,6 +35,7 @@ set_target_properties(LibCore
 	PROPERTIES
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
+	POSITION_INDEPENDENT_CODE TRUE
 	PREFIX "" # 'lib' as prefix is not needed on linux since the name is LibCore anyway
 	LINK_FLAGS "${EXTRA_LD_FLAGS}"
 	INSTALL_RPATH_USE_LINK_PATH TRUE
