@@ -86,7 +86,10 @@ int remove(StringRef path, std::error_code &ec)
 	return ec.value();
 }
 
-bool exists(StringRef loc) { return std::filesystem::exists(loc); }
+bool exists(StringRef loc)
+{
+	return std::filesystem::symlink_status(loc).type() != std::filesystem::file_type::not_found;
+}
 String baseName(StringRef path) { return std::filesystem::path(path).filename().string(); }
 String absPath(StringRef path) { return std::filesystem::absolute(path).string(); }
 void setCWD(StringRef path) { return std::filesystem::current_path(path); }

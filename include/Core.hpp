@@ -90,6 +90,7 @@ using Mutex	     = std::mutex;
 using Regex	     = std::regex;
 using String	     = std::string;
 using Thread	     = std::thread;
+using JThread	     = std::jthread;
 using IStream	     = std::istream;
 using OStream	     = std::ostream;
 using FStream	     = std::fstream;
