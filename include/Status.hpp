@@ -7,19 +7,19 @@ namespace core
 
 template<typename T> class Status
 {
-	T ret;
-	String msg;
+    T ret;
+    String msg;
 
 public:
-	// Allocates memory for string. If the message is a const char*, the other - non variadic -
-	// constructor should be used which doesn't allocate memory for message.
-	template<typename... Args> explicit Status(T &&ret, Args &&...msgArgs) : ret(std::move(ret))
-	{
-		utils::appendToString(msg, std::forward<Args>(msgArgs)...);
-	}
+    // Allocates memory for string. If the message is a const char*, the other - non variadic -
+    // constructor should be used which doesn't allocate memory for message.
+    template<typename... Args> explicit Status(T &&ret, Args &&...msgArgs) : ret(std::move(ret))
+    {
+        utils::appendToString(msg, std::forward<Args>(msgArgs)...);
+    }
 
-	inline const T &getCode() { return ret; }
-	inline StringRef getMsg() { return msg; }
+    inline const T &getCode() { return ret; }
+    inline StringRef getMsg() { return msg; }
 };
 
 } // namespace core

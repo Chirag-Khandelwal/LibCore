@@ -16,79 +16,79 @@ namespace core::fs
 
 StringRef parentDir(StringRef path)
 {
-	auto loc = path.find_last_of("/\\");
-	if(loc == String::npos) return "";
-	return path.substr(0, loc);
+    auto loc = path.find_last_of("/\\");
+    if(loc == String::npos) return "";
+    return path.substr(0, loc);
 }
 
 Status<bool> read(const char *file, String &data)
 {
-	FILE *fp;
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t read;
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
 
-	fp = fopen(file, "r");
-	if(fp == NULL) return Status(false, "Error: failed to open source file: ", file);
+    fp = fopen(file, "r");
+    if(fp == NULL) return Status(false, "Error: failed to open source file: ", file);
 
-	while((read = getline(&line, &len, fp)) != -1) data += line;
+    while((read = getline(&line, &len, fp)) != -1) data += line;
 
-	fclose(fp);
-	if(line) free(line);
+    fclose(fp);
+    if(line) free(line);
 
-	return Status(true);
+    return Status(true);
 }
 
 StringRef home()
 {
-	// StringRef works because String _home is static.
+    // StringRef works because String _home is static.
 #if defined(CORE_OS_WINDOWS)
-	static String _home = env::get("USERPROFILE");
+    static String _home = env::get("USERPROFILE");
 #else
-	static String _home = env::get("HOME");
+    static String _home = env::get("HOME");
 #endif
-	return _home;
+    return _home;
 }
 
 int copy(StringRef src, StringRef dest, std::error_code &ec)
 {
-	auto opts =
-	std::filesystem::copy_options::update_existing | std::filesystem::copy_options::recursive;
-	std::filesystem::copy(src, dest, opts, ec);
-	return ec.value();
+    auto opts =
+    std::filesystem::copy_options::update_existing | std::filesystem::copy_options::recursive;
+    std::filesystem::copy(src, dest, opts, ec);
+    return ec.value();
 }
 int mkdir(StringRef dir, std::error_code &ec)
 {
-	std::filesystem::create_directories(dir, ec);
-	return ec.value();
+    std::filesystem::create_directories(dir, ec);
+    return ec.value();
 }
 int mklink(StringRef src, StringRef dest, std::error_code &ec)
 {
-	if(exists(dest)) {
-		remove(dest, ec);
-		if(ec.value()) return ec.value();
-	}
-	if(exists(src) && std::filesystem::is_directory(src)) {
-		std::filesystem::create_directory_symlink(src, dest, ec);
-	} else {
-		std::filesystem::create_symlink(src, dest, ec);
-	}
-	return ec.value();
+    if(exists(dest)) {
+        remove(dest, ec);
+        if(ec.value()) return ec.value();
+    }
+    if(exists(src) && std::filesystem::is_directory(src)) {
+        std::filesystem::create_directory_symlink(src, dest, ec);
+    } else {
+        std::filesystem::create_symlink(src, dest, ec);
+    }
+    return ec.value();
 }
 int rename(StringRef from, StringRef to, std::error_code &ec)
 {
-	std::filesystem::rename(from, to, ec);
-	return ec.value();
+    std::filesystem::rename(from, to, ec);
+    return ec.value();
 }
 int remove(StringRef path, std::error_code &ec)
 {
-	std::filesystem::remove_all(path, ec);
-	return ec.value();
+    std::filesystem::remove_all(path, ec);
+    return ec.value();
 }
 
 bool exists(StringRef loc)
 {
-	return std::filesystem::symlink_status(loc).type() != std::filesystem::file_type::not_found;
+    return std::filesystem::symlink_status(loc).type() != std::filesystem::file_type::not_found;
 }
 String baseName(StringRef path) { return std::filesystem::path(path).filename().string(); }
 String absPath(StringRef path) { return std::filesystem::absolute(path).string(); }
@@ -131,42 +131,42 @@ String getCWD() { return std::filesystem::current_path().string(); }
  */
 ssize_t getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp)
 {
-	char *ptr, *eptr;
+    char *ptr, *eptr;
 
-	if(*buf == NULL || *bufsiz == 0) {
-		*bufsiz = BUFSIZ;
-		if((*buf = (char *)malloc(*bufsiz)) == NULL) return -1;
-	}
+    if(*buf == NULL || *bufsiz == 0) {
+        *bufsiz = BUFSIZ;
+        if((*buf = (char *)malloc(*bufsiz)) == NULL) return -1;
+    }
 
-	for(ptr = *buf, eptr = *buf + *bufsiz;;) {
-		int c = fgetc(fp);
-		if(c == -1) {
-			if(feof(fp)) {
-				ssize_t diff = (ssize_t)(ptr - *buf);
-				if(diff != 0) {
-					*ptr = '\0';
-					return diff;
-				}
-			}
-			return -1;
-		}
-		*ptr++ = c;
-		if(c == delimiter) {
-			*ptr = '\0';
-			return ptr - *buf;
-		}
-		if(ptr + 2 >= eptr) {
-			char *nbuf;
-			size_t nbufsiz = *bufsiz * 2;
-			ssize_t d      = ptr - *buf;
-			if((nbuf = (char *)realloc(*buf, nbufsiz)) == NULL) return -1;
-			*buf	= nbuf;
-			*bufsiz = nbufsiz;
-			eptr	= nbuf + nbufsiz;
-			ptr	= nbuf + d;
-		}
-	}
-	return 0;
+    for(ptr = *buf, eptr = *buf + *bufsiz;;) {
+        int c = fgetc(fp);
+        if(c == -1) {
+            if(feof(fp)) {
+                ssize_t diff = (ssize_t)(ptr - *buf);
+                if(diff != 0) {
+                    *ptr = '\0';
+                    return diff;
+                }
+            }
+            return -1;
+        }
+        *ptr++ = c;
+        if(c == delimiter) {
+            *ptr = '\0';
+            return ptr - *buf;
+        }
+        if(ptr + 2 >= eptr) {
+            char *nbuf;
+            size_t nbufsiz = *bufsiz * 2;
+            ssize_t d      = ptr - *buf;
+            if((nbuf = (char *)realloc(*buf, nbufsiz)) == NULL) return -1;
+            *buf    = nbuf;
+            *bufsiz = nbufsiz;
+            eptr    = nbuf + nbufsiz;
+            ptr     = nbuf + d;
+        }
+    }
+    return 0;
 }
 
 ssize_t getline(char **buf, size_t *bufsiz, FILE *fp) { return getdelim(buf, bufsiz, '\n', fp); }

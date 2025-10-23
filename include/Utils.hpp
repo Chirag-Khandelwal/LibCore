@@ -24,9 +24,6 @@ size_t countNewLinesTill(StringRef data, size_t loc);
 // Count number of digits (positive number only)
 size_t countDigits(size_t num);
 
-void outputString(fs::File *src, OStream &os, size_t locStart, size_t locEnd, bool iswarn,
-		  const String &e);
-
 // Counts all instances of `c` in `str`.
 size_t stringCharCount(StringRef str, char ch);
 
@@ -65,34 +62,17 @@ inline void appendToString(String &dest, const String &data) { dest += data; }
 
 template<typename... Args> void appendToString(String &dest, Args... args)
 {
-	int tmp[] = {(appendToString(dest, args), 0)...};
-	static_cast<void>(tmp);
+    int tmp[] = {(appendToString(dest, args), 0)...};
+    static_cast<void>(tmp);
 }
 template<typename... Args> String toString(Args... args)
 {
-	String dest;
-	appendToString(dest, std::forward<Args>(args)...);
-	return dest;
+    String dest;
+    appendToString(dest, std::forward<Args>(args)...);
+    return dest;
 }
 
-template<typename... Args>
-void output(fs::File *src, OStream &os, size_t locStart, size_t locEnd, bool iswarn, Args &&...args)
-{
-	String res = utils::toString(std::forward<Args>(args)...);
-	outputString(src, os, locStart, locEnd, iswarn, res);
-}
-
-template<typename... Args>
-void fail(fs::File *src, OStream &os, size_t locStart, size_t locEnd, Args &&...args)
-{
-	utils::output(src, os, locStart, locEnd, false, std::forward<Args>(args)...);
-}
-
-template<typename... Args>
-void warn(fs::File *src, OStream &os, size_t locStart, size_t locEnd, Args &&...args)
-{
-	utils::output(src, os, locStart, locEnd, true, std::forward<Args>(args)...);
-}
+void output(OStream &os, fs::File *src, size_t locStart, size_t locEnd, StringRef data);
 
 #if defined(CORE_OS_WINDOWS)
 // Windows' string to wstring functions

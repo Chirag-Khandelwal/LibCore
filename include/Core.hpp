@@ -86,52 +86,52 @@ using ssize_t = int32_t;
 namespace core
 {
 
-using Mutex	     = std::mutex;
-using Regex	     = std::regex;
-using String	     = std::string;
-using Thread	     = std::thread;
-using JThread	     = std::jthread;
-using IStream	     = std::istream;
-using OStream	     = std::ostream;
-using FStream	     = std::fstream;
-using Nullptr	     = std::nullptr_t;
-using IOStream	     = std::iostream;
-using IFStream	     = std::ifstream;
-using OFStream	     = std::ofstream;
-using StringRef	     = std::string_view;
+using Mutex          = std::mutex;
+using Regex          = std::regex;
+using String         = std::string;
+using Thread         = std::thread;
+using JThread        = std::jthread;
+using IStream        = std::istream;
+using OStream        = std::ostream;
+using FStream        = std::fstream;
+using Nullptr        = std::nullptr_t;
+using IOStream       = std::iostream;
+using IFStream       = std::ifstream;
+using OFStream       = std::ofstream;
+using StringRef      = std::string_view;
 using RecursiveMutex = std::recursive_mutex;
 
 #if defined(CORE_OS_WINDOWS)
-using WString	 = std::wstring;
+using WString    = std::wstring;
 using WStringRef = std::wstring_view;
 #endif
 
 struct StringHash
 {
-	using HashType	     = std::hash<StringRef>;
-	using is_transparent = void;
+    using HashType       = std::hash<StringRef>;
+    using is_transparent = void;
 
-	size_t operator()(const char *str) const { return HashType{}(str); }
-	size_t operator()(StringRef str) const { return HashType{}(str); }
-	size_t operator()(const String &str) const { return HashType{}(str); }
+    size_t operator()(const char *str) const { return HashType{}(str); }
+    size_t operator()(StringRef str) const { return HashType{}(str); }
+    size_t operator()(const String &str) const { return HashType{}(str); }
 };
 
-template<typename T> using Set		   = std::unordered_set<T>;
-template<typename T> using Span		   = std::span<T>;
-template<typename T> using Deque	   = std::deque<T>;
-template<typename T> using Atomic	   = std::atomic<T>;
-template<typename T> using Vector	   = std::vector<T>;
-template<typename T> using UniList	   = std::forward_list<T>; // singly linked list
-template<typename T> using InitList	   = std::initializer_list<T>;
-template<typename T> using LockGuard	   = std::lock_guard<T>;
-template<typename... Ts> using Variant	   = std::variant<Ts...>;
-template<typename T> using SharedFuture	   = std::shared_future<T>;
+template<typename T> using Set             = std::unordered_set<T>;
+template<typename T> using Span            = std::span<T>;
+template<typename T> using Deque           = std::deque<T>;
+template<typename T> using Atomic          = std::atomic<T>;
+template<typename T> using Vector          = std::vector<T>;
+template<typename T> using UniList         = std::forward_list<T>; // singly linked list
+template<typename T> using InitList        = std::initializer_list<T>;
+template<typename T> using LockGuard       = std::lock_guard<T>;
+template<typename... Ts> using Variant     = std::variant<Ts...>;
+template<typename T> using SharedFuture    = std::shared_future<T>;
 template<typename Fn> using PackagedTask   = std::packaged_task<Fn>;
 template<typename T, size_t N> using Array = std::array<T, N>;
 template<typename K, typename V> using Map = std::unordered_map<K, V>;
 template<typename V> using StringMap = std::unordered_map<String, V, StringHash, std::equal_to<>>;
 
 constexpr size_t MAX_PATH_CHARS = 4096;
-constexpr size_t MAX_ENV_CHARS	= 4096;
+constexpr size_t MAX_ENV_CHARS  = 4096;
 
 } // namespace core
