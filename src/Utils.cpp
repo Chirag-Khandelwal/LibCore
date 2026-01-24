@@ -12,12 +12,8 @@ namespace core::utils
 
 void outputChar(OStream &os, char ch, size_t count)
 {
-    for(size_t i = 0; i < count / 4; ++i) {
-        os << ch << ch << ch << ch;
-    }
-    for(size_t i = 0; i < count % 4; ++i) {
-        os << ch;
-    }
+    for(size_t i = 0; i < count / 4; ++i) { os << ch << ch << ch << ch; }
+    for(size_t i = 0; i < count % 4; ++i) { os << ch; }
 }
 size_t getNewLineBefore(StringRef data, size_t loc)
 {
@@ -101,68 +97,71 @@ Vector<StringRef> stringDelim(StringRef str, StringRef delim)
     return res;
 }
 
-String toRawString(StringRef data)
+String toRawString(String &&data)
 {
-    String res(data);
-    for(size_t i = 0; i < res.size(); ++i) {
-        if(res[i] == '\\') {
-            res.insert(i++, "\\");
+    for(size_t i = 0; i < data.size(); ++i) {
+        if(data[i] == '\\') {
+            data.insert(i++, "\\");
             continue;
         }
-        if(res[i] == '\0') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\0");
+        if(data[i] == '\0') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\0");
             continue;
         }
-        if(res[i] == '\a') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\a");
+        if(data[i] == '\a') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\a");
             continue;
         }
-        if(res[i] == '\b') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\b");
+        if(data[i] == '\b') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\b");
             continue;
         }
 #if !defined(CORE_OS_WINDOWS)
-        if(res[i] == '\e') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\e");
+        if(data[i] == '\e') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\e");
             continue;
         }
 #endif
-        if(res[i] == '\f') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\f");
+        if(data[i] == '\f') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\f");
             continue;
         }
-        if(res[i] == '\n') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\n");
+        if(data[i] == '\n') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\n");
             continue;
         }
-        if(res[i] == '\r') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\r");
+        if(data[i] == '\r') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\r");
             continue;
         }
-        if(res[i] == '\t') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\t");
+        if(data[i] == '\t') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\t");
             continue;
         }
-        if(res[i] == '\v') {
-            res.erase(res.begin() + i);
-            res.insert(i++, "\\v");
+        if(data[i] == '\v') {
+            data.erase(data.begin() + i);
+            data.insert(i++, "\\v");
             continue;
         }
     }
-    return res;
+    return data;
+}
+String toRawString(StringRef data)
+{
+    String res(data);
+    return toRawString(std::move(res));
 }
 
-String fromRawString(StringRef from)
+String fromRawString(String &&data)
 {
-    String data(from);
     for(size_t idx = 0; idx < data.size(); ++idx) {
         if(data[idx] != '\\') continue;
         if(idx + 1 >= data.size()) continue;
@@ -180,6 +179,11 @@ String fromRawString(StringRef from)
         else if(data[idx] == 'v') data[idx] = '\v';
     }
     return data;
+}
+String fromRawString(StringRef from)
+{
+    String res(from);
+    return fromRawString(std::move(res));
 }
 
 String vecToStr(Span<StringRef> items)
@@ -304,8 +308,8 @@ void output(OStream &os, fs::File *src, size_t locStart, size_t locEnd, StringRe
     if(src && locStart != -1) {
         size_t prevNewLine = getNewLineBefore(src->getData(), locStart);
         size_t nextNewLine = locEnd != -1 && locStart < locEnd
-                             ? getNewLineAfter(src->getData(), locEnd)
-                             : getNewLineAfter(src->getData(), locStart);
+                                 ? getNewLineAfter(src->getData(), locEnd)
+                                 : getNewLineAfter(src->getData(), locStart);
 
         String line(src->getData().begin() + (prevNewLine + 1),
                     src->getData().begin() + nextNewLine);
@@ -316,8 +320,8 @@ void output(OStream &os, fs::File *src, size_t locStart, size_t locEnd, StringRe
         size_t lineNumber  = countNewLinesTill(src->getData(), prevNewLine) + 1;
         size_t columnStart = locStart - (prevNewLine + 1) + (tabCount * 3);
         size_t columnEnd   = locEnd != -1 && locStart < locEnd
-                             ? locEnd - (prevNewLine + 1) + (tabCount * 3)
-                             : columnStart;
+                                 ? locEnd - (prevNewLine + 1) + (tabCount * 3)
+                                 : columnStart;
 
         size_t prefixSpaceCount = countDigits(lineNumber) + 3; // lineNum + " | "
         os << "In: " << src->getPath() << "\n";

@@ -1,6 +1,7 @@
 #include "FS.hpp"
 
 #include <filesystem>
+#include <sys/stat.h>
 
 #include "Env.hpp"
 
@@ -53,7 +54,7 @@ StringRef home()
 int copy(StringRef src, StringRef dest, std::error_code &ec)
 {
     auto opts =
-    std::filesystem::copy_options::update_existing | std::filesystem::copy_options::recursive;
+        std::filesystem::copy_options::update_existing | std::filesystem::copy_options::recursive;
     std::filesystem::copy(src, dest, opts, ec);
     return ec.value();
 }
@@ -92,8 +93,19 @@ bool exists(StringRef loc)
 }
 String baseName(StringRef path) { return std::filesystem::path(path).filename().string(); }
 String absPath(StringRef path) { return std::filesystem::absolute(path).string(); }
+String normPath(StringRef path) { return std::filesystem::weakly_canonical(path).string(); }
 void setCWD(StringRef path) { return std::filesystem::current_path(path); }
 String getCWD() { return std::filesystem::current_path().string(); }
+
+bool isFileNewer(const char *newFilePath, const char *oldFilePath)
+{
+    if(!exists(newFilePath)) return false;
+    if(!exists(oldFilePath)) return true;
+    struct stat newSt, oldSt;
+    stat(newFilePath, &newSt);
+    stat(oldFilePath, &oldSt);
+    return newSt.st_mtime > oldSt.st_mtime;
+}
 
 } // namespace core::fs
 

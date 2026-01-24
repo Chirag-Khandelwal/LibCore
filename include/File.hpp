@@ -29,6 +29,7 @@ public:
     StringRef getAppendData(size_t index) const;
 
     inline StringRef getPath() const { return path; }
+    inline const char *getPathCStr() const { return path.c_str(); }
     inline StringRef getData() const { return data; }
     inline bool isVirtual() const { return isVirt; }
     inline StringRef getLastAppendData() const { return getAppendData(appendLocs.size() - 1); }

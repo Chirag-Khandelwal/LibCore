@@ -35,6 +35,8 @@ Vector<StringRef> stringDelim(StringRef str, StringRef delim);
 
 // Convert special characters in string (\n, \t, ...) to raw (\\n, \\t, ...)
 // and vice versa
+String toRawString(String &&data);
+String fromRawString(String &&data);
 String toRawString(StringRef data);
 String fromRawString(StringRef data);
 

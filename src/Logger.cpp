@@ -1,7 +1,6 @@
 #include "Logger.hpp"
 
 #include <chrono>
-#include <format>
 
 namespace core
 {
@@ -46,17 +45,20 @@ Logger::Logger() : level(LogLevels::WARN) {}
 
 void Logger::logInternal(LogLevels lvl, StringRef data)
 {
-    namespace chrono = std::chrono;
-    String timebuf =
-    std::format("{:%Y-%m-%dT%H:%M:%S%Z}",
-                chrono::time_point_cast<chrono::milliseconds>(chrono::system_clock::now()));
-
+    namespace chrono           = std::chrono;
+    chrono::microseconds count = std::chrono::duration_cast<std::chrono::microseconds>(
+        chrono::system_clock::now().time_since_epoch());
+    std::time_t time =
+        std::chrono::system_clock::to_time_t(chrono::system_clock::time_point{count});
+    std::tm *t        = std::localtime(&time);
+    char timeBuf[512] = {0};
+    std::strftime(timeBuf, sizeof(timeBuf), "%FT%T%z", t); // %Y-%m-%dT%H:%M:%S+0000
     for(auto &s : sinks) {
         if(s.withCol) {
-            (*s.f) << "[" << timebuf << "][" << logLevelColorStr(lvl) << logLevelStr(lvl)
+            (*s.f) << "[" << timeBuf << "][" << logLevelColorStr(lvl) << logLevelStr(lvl)
                    << "\033[0m]: ";
         } else {
-            (*s.f) << "[" << timebuf << "][" << logLevelStr(lvl) << "]: ";
+            (*s.f) << "[" << timeBuf << "][" << logLevelStr(lvl) << "]: ";
         }
         (*s.f) << data << '\n';
     }

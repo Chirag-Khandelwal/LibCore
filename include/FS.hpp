@@ -24,7 +24,10 @@ int remove(StringRef path, std::error_code &ec);
 bool exists(StringRef loc);
 String baseName(StringRef path);
 String absPath(StringRef path);
+String normPath(StringRef path);
 void setCWD(StringRef path);
 String getCWD();
+
+bool isFileNewer(const char *newFilePath, const char *oldFilePath);
 
 } // namespace core::fs

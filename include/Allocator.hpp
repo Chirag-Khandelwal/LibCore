@@ -2,6 +2,10 @@
 
 #include "Core.hpp"
 
+#if defined(CORE_OS_WINDOWS)
+#include <bit> // required for std::countr_zero()
+#endif
+
 namespace core
 {
 
@@ -15,6 +19,18 @@ enum class AllocDetails : uint32_t
     // The address points to the usable location, so to get AllocDetail from there,
     // you must do: (char*)loc - sizeof(AllocDetail)
     NEXT,
+    // <Unused internally as of now>
+    // Can be used for something else while the memory is allocated -
+    // make sure to reset the value to zero before freeing though
+    // The address points to the usable location, so to get AllocDetail from there,
+    // you must do: (char*)loc - sizeof(AllocDetail)
+    PREV,
+    // <Unused internally as of now>
+    // Can be used for something else while the memory is allocated -
+    // make sure to reset the value to zero before freeing though
+    // The address points to the usable location, so to get AllocDetail from there,
+    // you must do: (char*)loc - sizeof(AllocDetail)
+    DATA,
 
     _LAST,
 };
@@ -38,11 +54,19 @@ struct MemPool
     char *mem;
 };
 
+// Base class for anything that uses the memory manager / allocator
+class IAllocated
+{
+public:
+    IAllocated();
+    virtual ~IAllocated();
+};
+
 class MemoryManager
 {
     // The size_t at freechunks[sz] is an address which holds an allocation.
     // This address is after ALLOC_DETAIL_BYTES bytes.
-    Map<size_t, size_t> freechunks;
+    Array<size_t, std::countr_zero(MAX_ROUNDUP)> freechunks;
     Vector<MemPool> pools;
     // TODO: have multiple arenas and then use mutexes individual to those arenas
     // then, in a mutithreaded environment, the manager should be able to choose one of the
@@ -52,6 +76,7 @@ class MemoryManager
     String name;
     size_t poolSize;
 
+    inline constexpr size_t getFreeChunkIndex(size_t sz) { return std::countr_zero(sz) - 1; }
     // works upto MAX_ROUNDUP
     size_t nextPow2(size_t sz);
     void allocPool();
@@ -60,23 +85,30 @@ public:
     MemoryManager(StringRef name, size_t poolSize = DEFAULT_POOL_SIZE);
     ~MemoryManager();
 
-    void *alloc(size_t size, size_t align);
-    void free(void *data);
+    void *allocRaw(size_t size, size_t align);
+    void freeRaw(void *data);
 
     // Helper function - only use if seeing memory issues.
     void dumpMem(char *pool);
 
-    template<typename T, typename... Args> T *alloc(Args &&...args)
+    template<typename T, typename... Args>
+    typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type
+    allocInit(Args &&...args)
     {
-        void *m = alloc(sizeof(T), alignof(T));
+        void *m = allocRaw(sizeof(T), alignof(T));
         return new(m) T(std::forward<Args>(args)...);
+    }
+    inline void freeDeinit(IAllocated *data)
+    {
+        data->~IAllocated();
+        freeRaw(data);
     }
 
     // alloc address must be AFTER sizeof(AllocDetail)
     inline void setAllocDetail(size_t alloc, AllocDetails field, size_t value)
     {
         (*(AllocDetail *)((char *)alloc - ALLOC_DETAIL_BYTES))[static_cast<uint32_t>(field)] =
-        value;
+            value;
     }
     // alloc address must be AFTER sizeof(AllocDetail)
     inline size_t getAllocDetail(size_t alloc, AllocDetails field)
@@ -88,70 +120,130 @@ public:
     inline size_t getPoolCount() { return pools.size(); }
 };
 
-// Base class for anything that uses the allocator
-class IAllocated
+class IAllocatedList
 {
-public:
-    IAllocated();
-    virtual ~IAllocated();
-};
-
-// Can be a static object - any allocation is expected to be free'd manually.
-class SimpleAllocator
-{
-    MemoryManager &mem;
     String name;
 
+protected:
+    MemoryManager &mem;
+    void *addAlloc(void *newAlloc, void *&start, void *&end);
+    void *removeAlloc(void *alloc, void *&start, void *&end);
+    void *removeAlloc(size_t allocIndex, void *&start, void *&end);
+
+    size_t calcSize(void *start) const;
+
+    void *getAt(size_t index, void *start, void *end) const;
+
+    inline void *getPrev(void *from, void *end) const
+    {
+        return from ? (void *)mem.getAllocDetail((size_t)from, AllocDetails::PREV) : end;
+    }
+    inline void *getNext(void *from, void *start) const
+    {
+        return from ? (void *)mem.getAllocDetail((size_t)from, AllocDetails::NEXT) : start;
+    }
+
+    inline bool isEmpty(void *start) const { return !start; }
+
 public:
-    SimpleAllocator(MemoryManager &mem, StringRef name);
+    IAllocatedList(MemoryManager &mem, String &&name);
+    IAllocatedList(MemoryManager &mem, const char *name);
 
     inline StringRef getName() { return name; }
-
-    // alloc address must be AFTER sizeof(AllocDetail)
-    inline void setAllocDetail(size_t alloc, AllocDetails field, size_t value)
-    {
-        return mem.setAllocDetail(alloc, field, value);
-    }
-    // alloc address must be AFTER sizeof(AllocDetail)
-    inline size_t getAllocDetail(size_t alloc, AllocDetails field)
-    {
-        return mem.getAllocDetail(alloc, field);
-    }
-
-    template<typename T, typename... Args>
-    typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type alloc(Args &&...args)
-    {
-        T *res = mem.alloc<T>(std::forward<Args>(args)...);
-        return res;
-    }
-    void free(IAllocated *data)
-    {
-        data->~IAllocated();
-        mem.free(data);
-    }
 };
 
 // Cannot be a static object - as it uses the static variable `logger` in destructor.
 // RAII based - does not allow freeing of the memory unless it goes out of scope.
-class ManagedAllocator
+// Only allocates IAllocated derived objects
+class ManagedList : public IAllocatedList
 {
-    SimpleAllocator allocator;
-    IAllocated *start;
+    IAllocated *start, *end;
 
 public:
-    ManagedAllocator(MemoryManager &mem, StringRef name);
-    ~ManagedAllocator();
-
-    inline StringRef getName() { return allocator.getName(); }
+    ManagedList(MemoryManager &mem, String &&name);
+    ManagedList(MemoryManager &mem, const char *name);
+    ~ManagedList();
 
     template<typename T, typename... Args>
     typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type alloc(Args &&...args)
     {
-        T *res = allocator.alloc<T>(std::forward<Args>(args)...);
-        allocator.setAllocDetail((size_t)res, AllocDetails::NEXT, (size_t)start);
-        start = res;
+        T *res = mem.allocInit<T>(std::forward<Args>(args)...);
+        addAlloc(res, (void *&)start, (void *&)end);
         return res;
     }
+
+    inline IAllocated *add(IAllocated *alloc)
+    {
+        return (IAllocated *)addAlloc(alloc, (void *&)start, (void *&)end);
+    }
+
+    inline IAllocated *remove(IAllocated *alloc)
+    {
+        return (IAllocated *)removeAlloc(alloc, (void *&)start, (void *&)end);
+    }
+    inline IAllocated *remove(size_t index)
+    {
+        return (IAllocated *)removeAlloc(index, (void *&)start, (void *&)end);
+    }
+
+    inline IAllocated *getStart() const { return start; }
+    inline IAllocated *getEnd() const { return end; }
+
+    inline IAllocated *at(size_t index) const { return (IAllocated *)getAt(index, start, end); }
+
+    inline IAllocated *prev(IAllocated *from = nullptr) const
+    {
+        return (IAllocated *)getPrev(from, end);
+    }
+    inline IAllocated *next(IAllocated *from = nullptr) const
+    {
+        return (IAllocated *)getNext(from, start);
+    }
+
+    inline size_t size() const { return calcSize(start); }
+    inline bool empty() const { return isEmpty(start); }
+};
+
+// Cannot be a static object - as it uses the static variable `logger` in destructor.
+// RAII based - does not allow freeing of the memory unless it goes out of scope.
+// Only allocates raw objects - NO constructor / destructor is called
+class ManagedRawList : public IAllocatedList
+{
+    void *start, *end;
+
+public:
+    ManagedRawList(MemoryManager &mem, String &&name);
+    ManagedRawList(MemoryManager &mem, const char *name);
+    ~ManagedRawList();
+
+    template<typename T> T *alloc(size_t count = 1)
+    {
+        T *res = (T *)mem.allocRaw(sizeof(T) * count, alignof(T));
+        addAlloc(res, start, end);
+        return res;
+    }
+    template<typename T> T *allocInit(const T *value, size_t count = 1)
+    {
+        T *res = alloc<T>(count);
+        memcpy(res, value, sizeof(T) * count);
+        return res;
+    }
+
+    inline void *add(void *alloc) { return addAlloc(alloc, start, end); }
+
+    inline void *remove(void *alloc) { return removeAlloc(alloc, start, end); }
+    inline void *remove(size_t index) { return removeAlloc(index, start, end); }
+
+    inline void *getStart() const { return start; }
+    inline void *getEnd() const { return end; }
+
+    inline void *at(size_t index) const { return getAt(index, start, end); }
+
+    inline void *prev(void *from = nullptr) const { return getPrev(from, end); }
+    inline void *next(void *from = nullptr) const { return getNext(from, start); }
+
+    inline size_t size() const { return calcSize(start); }
+    inline bool empty() const { return isEmpty(start); }
 };
 
 } // namespace core

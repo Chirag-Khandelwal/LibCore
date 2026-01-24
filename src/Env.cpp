@@ -73,7 +73,7 @@ String getProcPath()
     uint32_t sz = MAX_PATH_CHARS;
     _NSGetExecutablePath(path, &sz);
 #endif
-    return path;
+    return fs::normPath(path);
 }
 
 String getExeFromPath(const char *exe)
@@ -92,7 +92,7 @@ String getExeFromPath(const char *exe)
         pathstr = p;
         pathstr += "/";
         pathstr += exe;
-        if(fs::exists(pathstr)) return pathstr;
+        if(fs::exists(pathstr)) return fs::normPath(pathstr);
     }
     return "";
 }

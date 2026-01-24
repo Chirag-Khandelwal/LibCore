@@ -19,12 +19,13 @@ TEST_CASE("Basic", "File")
     REQUIRE(f.getAppendData(1) == "\n");
 
     std::ostringstream oss;
-    utils::output(oss, &f, 1, 5, "");
-    REQUIRE(oss.str() == "In: <test>\n1 | line 1\n     ~~~~~\n     ^\n");
+    utils::output(oss, &f, 0, 3, ""); // "line" (on line 1)
+    REQUIRE(oss.str() == "In: <test>\n1 | line 1\n    ~~~~\n    ^\n");
     oss.str("");
-    utils::output(oss, &f, 1, 5, "Warning: test warning");
-    REQUIRE(oss.str() == "In: <test>\n1 | line 1\n     ~~~~~\n     ^\n    Warning: test warning\n");
+    utils::output(oss, &f, 5, 5, "Warning: test warning"); // "1" (on line 1)
+    REQUIRE(oss.str() ==
+            "In: <test>\n1 | line 1\n         ~\n         ^\n    Warning: test warning\n");
     oss.str("");
-    utils::output(oss, &f, 8, 10, "Error: test fail");
-    REQUIRE(oss.str() == "In: <test>\n3 | line 3\n    ~~~\n    ^\n    Error: test fail\n");
+    utils::output(oss, &f, 8, 11, "Error: test fail"); // "line" (on line 3)
+    REQUIRE(oss.str() == "In: <test>\n3 | line 3\n    ~~~~\n    ^\n    Error: test fail\n");
 }
