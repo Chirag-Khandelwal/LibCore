@@ -62,6 +62,8 @@ public:
     virtual ~IAllocated();
 };
 
+template<typename T> concept IAllocatedDerived = std::is_base_of_v<IAllocated, T>;
+
 class MemoryManager
 {
     // The size_t at freechunks[sz] is an address which holds an allocation.
@@ -91,9 +93,7 @@ public:
     // Helper function - only use if seeing memory issues.
     void dumpMem(char *pool);
 
-    template<typename T, typename... Args>
-    typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type
-    allocInit(Args &&...args)
+    template<IAllocatedDerived T, typename... Args> T *allocInit(Args &&...args)
     {
         void *m = allocRaw(sizeof(T), alignof(T));
         return new(m) T(std::forward<Args>(args)...);
@@ -120,7 +120,7 @@ public:
     inline size_t getPoolCount() { return pools.size(); }
 };
 
-class IAllocatedList
+class IAllocatedList : public IAllocated
 {
     String name;
 
@@ -148,6 +148,7 @@ protected:
 public:
     IAllocatedList(MemoryManager &mem, String &&name);
     IAllocatedList(MemoryManager &mem, const char *name);
+    virtual ~IAllocatedList();
 
     inline StringRef getName() { return name; }
 };
@@ -164,13 +165,17 @@ public:
     ManagedList(MemoryManager &mem, const char *name);
     ~ManagedList();
 
-    template<typename T, typename... Args>
-    typename std::enable_if<std::is_base_of<IAllocated, T>::value, T *>::type alloc(Args &&...args)
+    template<IAllocatedDerived T, typename... Args> T *alloc(Args &&...args)
     {
         T *res = mem.allocInit<T>(std::forward<Args>(args)...);
         addAlloc(res, (void *&)start, (void *&)end);
         return res;
     }
+
+    bool free(IAllocated *alloc);
+    bool free(size_t index);
+
+    size_t clear();
 
     inline IAllocated *add(IAllocated *alloc)
     {
@@ -228,6 +233,11 @@ public:
         memcpy(res, value, sizeof(T) * count);
         return res;
     }
+
+    bool free(void *alloc);
+    bool free(size_t index);
+
+    size_t clear();
 
     inline void *add(void *alloc) { return addAlloc(alloc, start, end); }
 
