@@ -123,14 +123,13 @@ public:
 class IAllocatedList : public IAllocated
 {
     String name;
+    size_t count;
 
 protected:
     MemoryManager &mem;
     void *addAlloc(void *newAlloc, void *&start, void *&end);
     void *removeAlloc(void *alloc, void *&start, void *&end);
     void *removeAlloc(size_t allocIndex, void *&start, void *&end);
-
-    size_t calcSize(void *start) const;
 
     void *getAt(size_t index, void *start, void *end) const;
 
@@ -143,6 +142,7 @@ protected:
         return from ? (void *)mem.getAllocDetail((size_t)from, AllocDetails::NEXT) : start;
     }
 
+    inline size_t getSize() const { return count; }
     inline bool isEmpty(void *start) const { return !start; }
 
 public:
@@ -205,7 +205,7 @@ public:
         return (IAllocated *)getNext(from, start);
     }
 
-    inline size_t size() const { return calcSize(start); }
+    inline size_t size() const { return getSize(); }
     inline bool empty() const { return isEmpty(start); }
 };
 
@@ -252,7 +252,7 @@ public:
     inline void *prev(void *from = nullptr) const { return getPrev(from, end); }
     inline void *next(void *from = nullptr) const { return getNext(from, start); }
 
-    inline size_t size() const { return calcSize(start); }
+    inline size_t size() const { return getSize(); }
     inline bool empty() const { return isEmpty(start); }
 };
 

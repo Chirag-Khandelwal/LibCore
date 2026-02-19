@@ -7,7 +7,7 @@ namespace core
 
 Logger logger;
 
-const char *logLevelStr(LogLevels lvl)
+const char *logLevelStr(LogLevels::LogLevels lvl)
 {
     if(lvl == LogLevels::FATAL) return "FATAL";
     if(lvl == LogLevels::WARN) return "WARN";
@@ -17,7 +17,7 @@ const char *logLevelStr(LogLevels lvl)
 
     return "INVALID";
 }
-const char *logLevelColorStr(LogLevels lvl)
+const char *logLevelColorStr(LogLevels::LogLevels lvl)
 {
     if(lvl == LogLevels::FATAL) return "\033[31m";
     if(lvl == LogLevels::WARN) return "\033[33m";
@@ -43,7 +43,7 @@ SinkInfo::~SinkInfo()
 
 Logger::Logger() : level(LogLevels::WARN) {}
 
-void Logger::logInternal(LogLevels lvl, StringRef data)
+void Logger::logInternal(LogLevels::LogLevels lvl, StringRef data)
 {
     namespace chrono           = std::chrono;
     chrono::microseconds count = std::chrono::duration_cast<std::chrono::microseconds>(

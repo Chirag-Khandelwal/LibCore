@@ -37,11 +37,11 @@ MemoryManager::~MemoryManager()
         sz = 0;
     }
     for(auto &p : pools) AlignedFree(p.mem);
-    logger.info("=============== ", name, " memory manager stats: ===============");
-    logger.info("-- Total allocated bytes (pools + otherwise): ", totalAllocBytes.load());
-    logger.info("--                Allocated bytes from pools: ", totalPoolAlloc.load());
-    logger.info("--                             Request count: ", totalAllocRequests.load());
-    logger.info("--                         Chunk Reuse count: ", chunkReuseCount.load());
+    LOG_INFO("=============== ", name, " memory manager stats: ===============");
+    LOG_INFO("-- Total allocated bytes (pools + otherwise): ", totalAllocBytes.load());
+    LOG_INFO("--                Allocated bytes from pools: ", totalPoolAlloc.load());
+    LOG_INFO("--                             Request count: ", totalAllocRequests.load());
+    LOG_INFO("--                         Chunk Reuse count: ", chunkReuseCount.load());
 }
 
 size_t MemoryManager::nextPow2(size_t sz)
@@ -73,8 +73,8 @@ void *MemoryManager::allocRaw(size_t size, size_t align)
     size_t requiredSz = size + ALLOC_DETAIL_BYTES;
     size_t allocSz    = nextPow2(requiredSz);
 
-    logger.trace("Allocating: ", allocSz, " (required size: ", requiredSz,
-                 ") (original size: ", size, ")");
+    LOG_TRACE("Allocating: ", allocSz, " (required size: ", requiredSz, ") (original size: ", size,
+              ")");
 
     char *loc = nullptr;
 
@@ -82,7 +82,7 @@ void *MemoryManager::allocRaw(size_t size, size_t align)
     if(allocSz > poolSize) {
         totalAllocBytes += allocSz;
         loc = (char *)AlignedAlloc(MAX_ALIGNMENT, allocSz);
-        logger.trace("Allocated ", allocSz, " using malloc as it exceeds pool size: ", poolSize);
+        LOG_TRACE("Allocated ", allocSz, " using malloc as it exceeds pool size: ", poolSize);
     } else {
         totalPoolAlloc += allocSz;
         LockGuard<RecursiveMutex> mtxlock(mtx);
@@ -94,7 +94,7 @@ void *MemoryManager::allocRaw(size_t size, size_t align)
             setAllocDetail(addrSz, AllocDetails::NEXT, 0);
             addrSz = nextTmp;
             ++chunkReuseCount;
-            logger.trace("Allocated ", allocSz, " using chunk list");
+            LOG_TRACE("Allocated ", allocSz, " using chunk list");
             // No need to size size bytes here because they would have already been set
             // when they were taken from the pool.
             return loc;
@@ -106,7 +106,7 @@ void *MemoryManager::allocRaw(size_t size, size_t align)
             if(freespace >= allocSz) {
                 loc = p.head;
                 p.head += allocSz;
-                logger.trace("Allocated ", allocSz, " using existing pool");
+                LOG_TRACE("Allocated ", allocSz, " using existing pool");
                 break;
             }
         }
@@ -115,7 +115,7 @@ void *MemoryManager::allocRaw(size_t size, size_t align)
             auto &p = pools.back();
             loc     = p.head;
             p.head += allocSz;
-            logger.trace("Allocated ", allocSz, " using a newly generated pool");
+            LOG_TRACE("Allocated ", allocSz, " using a newly generated pool");
         }
     }
     loc += ALLOC_DETAIL_BYTES;
@@ -154,9 +154,12 @@ void MemoryManager::dumpMem(char *pool)
 IAllocated::IAllocated() {}
 IAllocated::~IAllocated() {}
 
-IAllocatedList::IAllocatedList(MemoryManager &mem, String &&name) : mem(mem), name(std::move(name))
+IAllocatedList::IAllocatedList(MemoryManager &mem, String &&name)
+    : mem(mem), name(std::move(name)), count(0)
 {}
-IAllocatedList::IAllocatedList(MemoryManager &mem, const char *name) : mem(mem), name(name) {}
+IAllocatedList::IAllocatedList(MemoryManager &mem, const char *name)
+    : mem(mem), name(name), count(0)
+{}
 IAllocatedList::~IAllocatedList() {}
 
 void *IAllocatedList::addAlloc(void *newAlloc, void *&start, void *&end)
@@ -170,6 +173,7 @@ void *IAllocatedList::addAlloc(void *newAlloc, void *&start, void *&end)
         mem.setAllocDetail((size_t)end, AllocDetails::NEXT, (size_t)newAlloc);
         end = newAlloc;
     }
+    ++count;
     return newAlloc;
 }
 
@@ -192,6 +196,7 @@ void *IAllocatedList::removeAlloc(void *alloc, void *&start, void *&end)
         if(prev) mem.setAllocDetail((size_t)prev, AllocDetails::NEXT, (size_t)next);
         if(next) mem.setAllocDetail((size_t)next, AllocDetails::PREV, (size_t)prev);
     }
+    --count;
     return alloc;
 }
 
@@ -201,14 +206,6 @@ void *IAllocatedList::removeAlloc(size_t allocIndex, void *&start, void *&end)
     size_t i   = 0;
     while(i++ <= allocIndex && (iter = getNext(iter, start)));
     return removeAlloc(iter, start, end);
-}
-
-size_t IAllocatedList::calcSize(void *start) const
-{
-    size_t i   = 0;
-    void *iter = nullptr;
-    while((iter = getNext(iter, start))) ++i;
-    return i;
 }
 
 void *IAllocatedList::getAt(size_t index, void *start, void *end) const
@@ -228,7 +225,7 @@ ManagedList::ManagedList(MemoryManager &mem, const char *name)
 ManagedList::~ManagedList()
 {
     size_t count = clear();
-    logger.debug(getName(), " allocator had ", count, " allocations");
+    LOG_DEBUG(getName(), " allocator had ", count, " allocations");
 }
 
 bool ManagedList::free(IAllocated *alloc)
@@ -265,7 +262,7 @@ ManagedRawList::ManagedRawList(MemoryManager &mem, const char *name)
 ManagedRawList::~ManagedRawList()
 {
     size_t count = clear();
-    logger.debug(getName(), " allocator had ", count, " allocations");
+    LOG_DEBUG(getName(), " allocator had ", count, " allocations");
 }
 
 bool ManagedRawList::free(void *alloc)
