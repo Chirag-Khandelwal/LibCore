@@ -6,8 +6,8 @@ namespace core::env
 {
 
 String get(const char *key);
-String getProcPath();
-String getExeFromPath(const char *exe);
+Path getHome();
+Path getProcPath();
 
 bool set(const char *key, const char *val, bool overwrite);
 

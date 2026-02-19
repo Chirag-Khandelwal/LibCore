@@ -2,7 +2,7 @@
 
 #include "Core.hpp"
 
-namespace core::fs
+namespace core
 {
 class File;
 }
@@ -61,6 +61,7 @@ inline void appendToString(String &dest, char *data) { dest += data; }
 inline void appendToString(String &dest, const char *data) { dest += data; }
 inline void appendToString(String &dest, StringRef data) { dest += data; }
 inline void appendToString(String &dest, const String &data) { dest += data; }
+inline void appendToString(String &dest, const Path &data) { dest += data; }
 
 template<typename... Args> void appendToString(String &dest, Args... args)
 {
@@ -74,7 +75,7 @@ template<typename... Args> String toString(Args... args)
     return dest;
 }
 
-void output(OStream &os, fs::File *src, size_t locStart, size_t locEnd, StringRef data);
+void output(OStream &os, File *src, size_t locStart, size_t locEnd, StringRef data);
 
 #if defined(CORE_OS_WINDOWS)
 // Windows' string to wstring functions

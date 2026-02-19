@@ -11,7 +11,7 @@ public:
     Test(int p) : p(p) {}
 };
 
-TEST_CASE("MemoryManager", "Basic")
+TEST_CASE("MemoryManager.Basic")
 {
     MemoryManager mem("Basic");
 
@@ -26,7 +26,7 @@ TEST_CASE("MemoryManager", "Basic")
     REQUIRE(mem.getPoolCount() == 1);
 }
 
-TEST_CASE("ManagedList", "Basic")
+TEST_CASE("ManagedList.Basic")
 {
     MemoryManager mem("Basic");
     ManagedList allocator(mem, "ManagedList");
@@ -36,7 +36,7 @@ TEST_CASE("ManagedList", "Basic")
     REQUIRE(res->p == 5);
 }
 
-TEST_CASE("ManagedRawList", "Basic")
+TEST_CASE("ManagedRawList.Basic")
 {
     MemoryManager mem("Basic");
     ManagedRawList allocator1(mem, "ManagedRawList1");

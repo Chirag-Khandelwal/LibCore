@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstring>
 #include <deque>
+#include <filesystem>
 #include <forward_list>
 #include <fstream>
 #include <future>
@@ -86,6 +87,9 @@ using ssize_t = int32_t;
 namespace core
 {
 
+namespace fs = std::filesystem;
+
+using Path           = fs::path;
 using Mutex          = std::mutex;
 using Regex          = std::regex;
 using String         = std::string;

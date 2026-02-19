@@ -3,7 +3,12 @@
 #include "Allocator.hpp"
 #include "Status.hpp"
 
-namespace core::fs
+#if defined(CORE_OS_WINDOWS)
+ssize_t getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp);
+ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
+#endif
+
+namespace core
 {
 
 // To create and manage files (including virtual like `<eval>`)
@@ -28,6 +33,8 @@ public:
     bool append(StringRef data);
     StringRef getAppendData(size_t index) const;
 
+    static Status<bool> readFile(const char *file, String &data);
+
     inline StringRef getPath() const { return path; }
     inline const char *getPathCStr() const { return path.c_str(); }
     inline StringRef getData() const { return data; }
@@ -40,4 +47,4 @@ public:
     inline size_t sizeAppendLocs() const { return appendLocs.size(); }
 };
 
-} // namespace core::fs
+} // namespace core

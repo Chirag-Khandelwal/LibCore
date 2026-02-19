@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 
-#include "FS.hpp"
 #include "Utils.hpp"
 
 #if defined(CORE_OS_WINDOWS)
@@ -46,7 +45,16 @@ String get(const char *key)
 #endif
 }
 
-String getProcPath()
+Path getHome()
+{
+#if defined(CORE_OS_WINDOWS)
+    return env::get("USERPROFILE");
+#else
+    return env::get("HOME");
+#endif
+}
+
+Path getProcPath()
 {
     char path[MAX_PATH_CHARS];
     memset(path, 0, MAX_PATH_CHARS);
@@ -73,28 +81,7 @@ String getProcPath()
     uint32_t sz = MAX_PATH_CHARS;
     _NSGetExecutablePath(path, &sz);
 #endif
-    return fs::normPath(path);
-}
-
-String getExeFromPath(const char *exe)
-{
-    String path = get("PATH");
-    if(path.empty()) return path;
-
-#if defined(CORE_OS_WINDOWS)
-    Vector<StringRef> paths = utils::stringDelim(path, ";");
-#else
-    Vector<StringRef> paths = utils::stringDelim(path, ":");
-#endif
-
-    String pathstr;
-    for(auto &p : paths) {
-        pathstr = p;
-        pathstr += "/";
-        pathstr += exe;
-        if(fs::exists(pathstr)) return fs::normPath(pathstr);
-    }
-    return "";
+    return path;
 }
 
 int exec(const char *cmd)

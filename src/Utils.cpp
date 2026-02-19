@@ -303,7 +303,7 @@ String viewBackSlash(StringRef data)
     return res;
 }
 
-void output(OStream &os, fs::File *src, size_t locStart, size_t locEnd, StringRef data)
+void output(OStream &os, File *src, size_t locStart, size_t locEnd, StringRef data)
 {
     if(src && locStart != -1) {
         size_t prevNewLine = getNewLineBefore(src->getData(), locStart);

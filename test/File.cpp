@@ -4,9 +4,9 @@
 
 using namespace core;
 
-TEST_CASE("Basic", "File")
+TEST_CASE("File.Basic")
 {
-    fs::File f("<test>", true);
+    File f("<test>", true);
     REQUIRE(f.emptyData());
     REQUIRE(f.isVirtual());
 

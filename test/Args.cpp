@@ -4,7 +4,7 @@
 
 using namespace core;
 
-TEST_CASE("Help", "Args")
+TEST_CASE("Args.Help")
 {
     Array<StringRef, 2> args = {"mainProgram", "--help"};
     args::ArgParser parser(args);
@@ -31,7 +31,7 @@ TEST_CASE("Help", "Args")
     REQUIRE(parser2.has("help"));
 }
 
-TEST_CASE("Version", "Args")
+TEST_CASE("Args.Version")
 {
     Array<StringRef, 2> args = {"mainProgram", "--version"};
     args::ArgParser parser(args);
@@ -47,7 +47,7 @@ TEST_CASE("Version", "Args")
     REQUIRE(parser.has("version"));
 }
 
-TEST_CASE("GivenArgs8", "Args")
+TEST_CASE("Args.GivenArgs8")
 {
     Array<StringRef, 8> args = {"mainProgram", "--a1", "a", "--b1", "prog", "--", "--o1", "value"};
     args::ArgParser parser(args);
