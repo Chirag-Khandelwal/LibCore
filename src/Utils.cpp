@@ -3,8 +3,8 @@
 #include "File.hpp"
 
 #if defined(CORE_OS_WINDOWS)
-#include <AtlBase.h>
-#include <atlconv.h>
+#include <codecvt>
+#include <locale>
 #endif
 
 namespace core::utils
@@ -217,13 +217,17 @@ String vecToStr(Span<String> items)
 }
 
 #if defined(CORE_OS_WINDOWS)
-// Windows' string to wstring functions
-WString toWString(StringRef data)
+WString sToWString(const char *data)
 {
-    size_t wstrLen = std::mbstowcs(nullptr, data.data(), data.size());
-    WString wstr(wstrLen, 0);
-    std::mbstowcs(wstr.data(), data.data(), data.size());
-    return wstr;
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+    return converterX.from_bytes(data);
+}
+String wToString(const wchar_t *data)
+{
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+    return converterX.to_bytes(data);
 }
 #endif
 
@@ -236,7 +240,7 @@ void removeBackSlash(String &s)
             if(*it == '0') *it = '\0';
             else if(*it == 'a') *it = '\a';
             else if(*it == 'b') *it = '\b';
-#if !defined(OS_WINDOWS)
+#if !defined(CORE_OS_WINDOWS)
             else if(*it == 'e') *it = '\e';
 #endif
             else if(*it == 'f') *it = '\f';
@@ -267,7 +271,7 @@ String viewBackSlash(StringRef data)
             res.insert(it - res.begin(), "\\b");
             continue;
         }
-#if !defined(OS_WINDOWS)
+#if !defined(CORE_OS_WINDOWS)
         if(*it == '\e') {
             it = res.erase(it);
             res.insert(it - res.begin(), "\\e");

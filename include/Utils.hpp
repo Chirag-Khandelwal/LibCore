@@ -12,6 +12,11 @@ namespace core::utils
 
 inline bool startsWith(StringRef src, StringRef term) { return src.rfind(term, 0) == 0; }
 
+#if defined(CORE_OS_WINDOWS)
+WString sToWString(const char *data);
+String wToString(const wchar_t *data);
+#endif
+
 // Output a char `ch`, `count` times.
 void outputChar(OStream &os, char ch, size_t count);
 // Does not include loc. So if loc is a newline, the function won't return loc itself.
@@ -61,7 +66,11 @@ inline void appendToString(String &dest, char *data) { dest += data; }
 inline void appendToString(String &dest, const char *data) { dest += data; }
 inline void appendToString(String &dest, StringRef data) { dest += data; }
 inline void appendToString(String &dest, const String &data) { dest += data; }
+#if defined(CORE_OS_WINDOWS)
+inline void appendToString(String &dest, const Path &data) { dest += wToString(data.c_str()); }
+#else
 inline void appendToString(String &dest, const Path &data) { dest += data; }
+#endif
 
 template<typename... Args> void appendToString(String &dest, Args... args)
 {
@@ -76,10 +85,5 @@ template<typename... Args> String toString(Args... args)
 }
 
 void output(OStream &os, File *src, size_t locStart, size_t locEnd, StringRef data);
-
-#if defined(CORE_OS_WINDOWS)
-// Windows' string to wstring functions
-WString toWString(StringRef data);
-#endif
 
 } // namespace core::utils
