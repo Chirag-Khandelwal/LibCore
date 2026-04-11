@@ -22,7 +22,8 @@ set(PROJECT_VERSION_PATCH "8")
 
 file(GLOB_RECURSE INCS RELATIVE "${PROJECT_SOURCE_DIR}" "include/*.hpp")
 file(GLOB_RECURSE SRCS RELATIVE "${PROJECT_SOURCE_DIR}" "src/*.cpp")
-add_library(LibCore STATIC ${SRCS} ${INCS})
+# STATIC creates a separate LibCore.lib object that must be linked against, instead of merging the source with the dependent project.
+add_library(LibCore OBJECT ${SRCS} ${INCS})
 # Alias for LibCore
 add_library(LibCore::LibCore ALIAS LibCore)
 target_compile_features(LibCore PUBLIC cxx_std_20)
