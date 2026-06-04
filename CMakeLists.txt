@@ -15,8 +15,14 @@ project(LibCore
 	LANGUAGES CXX)
 
 set(PROJECT_VERSION_MAJOR "1")
-set(PROJECT_VERSION_MINOR "1")
-set(PROJECT_VERSION_PATCH "8")
+set(PROJECT_VERSION_MINOR "2")
+set(PROJECT_VERSION_PATCH "0")
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+set(LIBCORE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/LibCore"
+     CACHE STRING "Directory to install LibCore cmake config files")
 
 # LibCore Library
 
@@ -27,7 +33,10 @@ add_library(LibCore OBJECT ${SRCS} ${INCS})
 # Alias for LibCore
 add_library(LibCore::LibCore ALIAS LibCore)
 target_compile_features(LibCore PUBLIC cxx_std_20)
-target_include_directories(LibCore PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(LibCore PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/core>
+)
 # For MSVC. It requires externed variables to be specified as __declspec(dllexport/dllimport) depending on
 # if the the DLL is being generated, or is being used.
 target_compile_definitions(LibCore PRIVATE EXPORT_FOR_DLL=true)
@@ -45,6 +54,31 @@ set_target_properties(LibCore
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
 	DESTINATION "${CMAKE_INSTALL_PREFIX}/include/core"
 	FILES_MATCHING PATTERN "*.hpp"
+)
+install(TARGETS LibCore
+    EXPORT LibCoreTargets
+)
+install(EXPORT LibCoreTargets
+    FILE LibCoreTargets.cmake
+    NAMESPACE LibCore::
+    DESTINATION ${LIBCORE_INSTALL_CMAKEDIR}
+)
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/LibCoreConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/LibCoreConfig.cmake"
+    INSTALL_DESTINATION ${LIBCORE_INSTALL_CMAKEDIR}
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/LibCoreConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/LibCoreConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/LibCoreConfigVersion.cmake"
+    DESTINATION ${LIBCORE_INSTALL_CMAKEDIR}
 )
 
 # Testing
