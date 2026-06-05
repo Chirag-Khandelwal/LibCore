@@ -17,8 +17,8 @@ enum LogLevels
 };
 } // namespace LogLevels
 
-const char *logLevelStr(LogLevels::LogLevels lvl);
-const char *logLevelColorStr(LogLevels::LogLevels lvl);
+CORE_API const char *logLevelStr(LogLevels::LogLevels lvl);
+CORE_API const char *logLevelColorStr(LogLevels::LogLevels lvl);
 
 struct SinkInfo
 {
@@ -30,14 +30,13 @@ struct SinkInfo
     // Declaring a copy constructor deletes implicit move constructor required by vector when it
     // grows.
     SinkInfo(SinkInfo &&si) noexcept;
-    // No copy constructor.
-    SinkInfo(const SinkInfo &SinkInfo) = delete;
-    // No copy operator.
+    // No copy constructor and copy operator.
+    SinkInfo(const SinkInfo &SinkInfo)            = delete;
     SinkInfo &operator=(const SinkInfo &SinkInfo) = delete;
     ~SinkInfo();
 };
 
-class Logger
+class CORE_API Logger
 {
     Vector<SinkInfo> sinks;
     LogLevels::LogLevels level;
@@ -53,6 +52,9 @@ class Logger
 
 public:
     Logger();
+    // No copy constructor and copy operator.
+    Logger(const Logger &logger)            = delete;
+    Logger &operator=(const Logger &logger) = delete;
 
     bool addSinkByName(const char *name, bool withCol);
 
@@ -87,7 +89,7 @@ public:
     inline bool isLevelLoggable(LogLevels::LogLevels lvl) { return level >= lvl; }
 };
 
-extern DLL_EXPORT Logger logger;
+extern CORE_API Logger logger;
 
 #define LOG_OBJ_FATAL(loggerObj, ...)                                                     \
     do {                                                                                  \

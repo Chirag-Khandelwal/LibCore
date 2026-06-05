@@ -5,7 +5,7 @@
 namespace core::args
 {
 
-class ArgInfo
+class CORE_API ArgInfo
 {
     // Name for the argument
     String name;
@@ -81,7 +81,7 @@ public:
 };
 
 // Note that `--` can be used to
-class ArgParser
+class CORE_API ArgParser
 {
     Vector<StringRef> argv;
     // What/How to parse.

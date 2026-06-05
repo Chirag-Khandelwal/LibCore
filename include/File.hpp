@@ -4,8 +4,8 @@
 #include "Status.hpp"
 
 #if defined(CORE_OS_WINDOWS)
-ssize_t getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp);
-ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
+CORE_API ssize_t getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp);
+CORE_API ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
 #endif
 
 namespace core
@@ -13,7 +13,7 @@ namespace core
 
 // To create and manage files (including virtual like `<eval>`)
 // as well as provide error messages using file locations.
-class File : public IAllocated
+class CORE_API File : public IAllocated
 {
     String path;
     // All file contents are stored in this.

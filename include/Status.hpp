@@ -5,7 +5,7 @@
 namespace core
 {
 
-template<typename T> class Status
+template<typename T> class CORE_API Status
 {
     T ret;
     String msg;

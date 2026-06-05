@@ -64,12 +64,12 @@
 
 #if defined(CORE_OS_WINDOWS)
 #if defined(EXPORT_FOR_DLL)
-#define DLL_EXPORT __declspec(dllexport)
+#define CORE_API __declspec(dllexport)
 #else
-#define DLL_EXPORT __declspec(dllimport)
+#define CORE_API __declspec(dllimport)
 #endif
 #else
-#define DLL_EXPORT
+#define CORE_API
 #endif
 
 #if defined(CORE_OS_WINDOWS)

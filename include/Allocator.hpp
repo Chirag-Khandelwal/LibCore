@@ -64,7 +64,7 @@ public:
 
 template<typename T> concept IAllocatedDerived = std::is_base_of_v<IAllocated, T>;
 
-class MemoryManager
+class CORE_API MemoryManager
 {
     // The size_t at freechunks[sz] is an address which holds an allocation.
     // This address is after ALLOC_DETAIL_BYTES bytes.
@@ -156,7 +156,7 @@ public:
 // Cannot be a static object - as it uses the static variable `logger` in destructor.
 // RAII based - does not allow freeing of the memory unless it goes out of scope.
 // Only allocates IAllocated derived objects
-class ManagedList : public IAllocatedList
+class CORE_API ManagedList : public IAllocatedList
 {
     IAllocated *start, *end;
 
@@ -212,7 +212,7 @@ public:
 // Cannot be a static object - as it uses the static variable `logger` in destructor.
 // RAII based - does not allow freeing of the memory unless it goes out of scope.
 // Only allocates raw objects - NO constructor / destructor is called
-class ManagedRawList : public IAllocatedList
+class CORE_API ManagedRawList : public IAllocatedList
 {
     void *start, *end;
 

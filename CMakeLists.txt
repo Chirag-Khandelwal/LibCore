@@ -15,7 +15,7 @@ project(LibCore
 	LANGUAGES CXX)
 
 set(PROJECT_VERSION_MAJOR "1")
-set(PROJECT_VERSION_MINOR "2")
+set(PROJECT_VERSION_MINOR "3")
 set(PROJECT_VERSION_PATCH "0")
 
 include(GNUInstallDirs)
@@ -30,8 +30,8 @@ file(GLOB_RECURSE INCS RELATIVE "${PROJECT_SOURCE_DIR}" "include/*.hpp")
 file(GLOB_RECURSE SRCS RELATIVE "${PROJECT_SOURCE_DIR}" "src/*.cpp")
 # STATIC creates a separate LibCore.lib object that must be linked against, instead of merging the source with the dependent project.
 add_library(LibCore OBJECT ${SRCS} ${INCS})
+add_library(LibCore::LibCore ALIAS LibCore) # Required to use LibCore::LibCore consistently if using FetchContent instead of find_package
 # Alias for LibCore
-add_library(LibCore::LibCore ALIAS LibCore)
 target_compile_features(LibCore PUBLIC cxx_std_20)
 target_include_directories(LibCore PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -101,7 +101,7 @@ if(BUILD_TESTING AND NOT_SUBPROJECT)
 		get_filename_component(testname ${m} NAME_WE)
 		add_executable(${testname} "${testfile}")
 		target_compile_features(${testname} PRIVATE cxx_std_20)
-		target_link_libraries(${testname} LibCore::LibCore Catch2::Catch2WithMain)
+		target_link_libraries(${testname} LibCore Catch2::Catch2WithMain)
 		set_target_properties(${testname}
 			PROPERTIES
 			CXX_STANDARD_REQUIRED ON

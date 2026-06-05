@@ -5,7 +5,7 @@
 namespace core
 {
 
-template<typename T, typename E> class Result
+template<typename T, typename E> class CORE_API Result
 {
     Variant<T, Status<E>> data;
 
@@ -13,8 +13,8 @@ public:
     // okay value
     Result(T &&obj) : data(std::move(obj)) {}
     // err value
-    template<typename... Args> explicit Result(E &&ec, Args &&...msgArgs)
-        : data(Status<E>(ec, std::forward<Args>(msgArgs)...))
+    template<typename... Args>
+    explicit Result(E &&ec, Args &&...msgArgs) : data(Status<E>(ec, std::forward<Args>(msgArgs)...))
     {}
     Result(Status<E> &&obj) : data(std::move(obj)) {}
 

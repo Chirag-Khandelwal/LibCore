@@ -13,43 +13,45 @@ namespace core::utils
 inline bool startsWith(StringRef src, StringRef term) { return src.rfind(term, 0) == 0; }
 
 #if defined(CORE_OS_WINDOWS)
-WString sToWString(const char *data);
-String wToString(const wchar_t *data);
+CORE_API WString sToWString(const char *data);
+CORE_API String wToString(const wchar_t *data);
 #endif
 
 // Output a char `ch`, `count` times.
-void outputChar(OStream &os, char ch, size_t count);
+CORE_API void outputChar(OStream &os, char ch, size_t count);
 // Does not include loc. So if loc is a newline, the function won't return loc itself.
-size_t getNewLineBefore(StringRef data, size_t loc);
+CORE_API size_t getNewLineBefore(StringRef data, size_t loc);
 // Does not include loc. So if loc is a newline, the function won't return loc itself.
-size_t getNewLineAfter(StringRef data, size_t loc);
+CORE_API size_t getNewLineAfter(StringRef data, size_t loc);
 // The range is [0, loc] (inclusive)
-size_t countNewLinesTill(StringRef data, size_t loc);
+CORE_API size_t countNewLinesTill(StringRef data, size_t loc);
 
 // Count number of digits (positive number only)
-size_t countDigits(size_t num);
+CORE_API size_t countDigits(size_t num);
 
 // Counts all instances of `c` in `str`.
-size_t stringCharCount(StringRef str, char ch);
+CORE_API size_t stringCharCount(StringRef str, char ch);
 
 // Replaces all instances of `from` with `to` in `str`.
-void stringReplace(String &str, StringRef from, StringRef to);
+CORE_API void stringReplace(String &str, StringRef from, StringRef to);
 
 // Also trims the spaces for each split
-Vector<StringRef> stringDelim(StringRef str, StringRef delim);
+CORE_API Vector<StringRef> stringDelim(StringRef str, StringRef delim);
 
 // Convert special characters in string (\n, \t, ...) to raw (\\n, \\t, ...)
 // and vice versa
-String toRawString(String &&data);
-String fromRawString(String &&data);
-String toRawString(StringRef data);
-String fromRawString(StringRef data);
+CORE_API String toRawString(String &&data);
+CORE_API String fromRawString(String &&data);
+CORE_API String toRawString(StringRef data);
+CORE_API String fromRawString(StringRef data);
 
-String vecToStr(Span<StringRef> items);
-String vecToStr(Span<String> items);
+CORE_API String vecToStr(Span<StringRef> items);
+CORE_API String vecToStr(Span<String> items);
 
-void removeBackSlash(String &s);
-String viewBackSlash(StringRef data);
+CORE_API void removeBackSlash(String &s);
+CORE_API String viewBackSlash(StringRef data);
+
+CORE_API void output(OStream &os, File *src, size_t locStart, size_t locEnd, StringRef data);
 
 inline void appendToString(String &dest) {}
 
@@ -83,7 +85,5 @@ template<typename... Args> String toString(Args... args)
     appendToString(dest, std::forward<Args>(args)...);
     return dest;
 }
-
-void output(OStream &os, File *src, size_t locStart, size_t locEnd, StringRef data);
 
 } // namespace core::utils
